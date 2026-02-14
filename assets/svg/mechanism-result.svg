@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80">
+  <!-- Background circle -->
+  <circle cx="40" cy="40" r="38" fill="#EEF4F9" stroke="#B8C9D9" stroke-width="1.5"/>
+
+  <!-- Document -->
+  <rect x="18" y="10" rx="4" ry="4" width="44" height="56" fill="white" stroke="#444" stroke-width="2"/>
+
+  <!-- Document header bar -->
+  <rect x="18" y="10" rx="4" ry="0" width="44" height="10" fill="#6BA4D9" stroke="#444" stroke-width="2"/>
+
+  <!-- Checklist row 1 -->
+  <rect x="25" y="26" rx="2" ry="2" width="10" height="10" fill="#EEF4F9" stroke="#444" stroke-width="1.5"/>
+  <polyline points="27,31 30,34 35,28" fill="none" stroke="#6BBFB9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <line x1="40" y1="30" x2="55" y2="30" stroke="#B8C9D9" stroke-width="2" stroke-linecap="round"/>
+
+  <!-- Checklist row 2 -->
+  <rect x="25" y="40" rx="2" ry="2" width="10" height="10" fill="#EEF4F9" stroke="#444" stroke-width="1.5"/>
+  <polyline points="27,45 30,48 35,42" fill="none" stroke="#6BBFB9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <line x1="40" y1="44" x2="55" y2="44" stroke="#B8C9D9" stroke-width="2" stroke-linecap="round"/>
+
+  <!-- Checklist row 3 -->
+  <rect x="25" y="54" rx="2" ry="2" width="10" height="10" fill="#EEF4F9" stroke="#444" stroke-width="1.5"/>
+  <polyline points="27,59 30,62 35,56" fill="none" stroke="#6BBFB9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <line x1="40" y1="58" x2="55" y2="58" stroke="#B8C9D9" stroke-width="2" stroke-linecap="round"/>
+</svg>
