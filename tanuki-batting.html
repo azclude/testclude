@@ -2,44 +2,72 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>たぬきバッティング 🦝⚾</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
-body {
+html, body {
+  width: 100%;
+  height: 100%;
   overflow: hidden;
-  background: linear-gradient(180deg, #87CEEB 0%, #87CEEB 60%, #90EE90 60%, #228B22 100%);
-  font-family: 'Segoe UI', 'Hiragino Sans', sans-serif;
+  background: #000;
+  font-family: 'Segoe UI', 'Hiragino Sans', 'Noto Sans JP', sans-serif;
   user-select: none;
   -webkit-user-select: none;
+  touch-action: manipulation;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 canvas {
   display: block;
+  width: 100%;
+  height: 100%;
 }
 
 #ui-overlay {
-  position: absolute;
+  position: fixed;
   top: 0; left: 0;
   width: 100%; height: 100%;
   pointer-events: none;
+  display: flex;
+  flex-direction: column;
 }
 
 #score-display {
   position: absolute;
-  top: 20px; left: 50%;
-  transform: translateX(-50%);
-  font-size: 28px;
+  top: max(env(safe-area-inset-top, 0px), 8px);
+  left: 0; right: 0;
+  text-align: center;
+  padding: 8px;
+}
+
+#distance {
+  font-size: clamp(20px, 5vw, 36px);
   font-weight: bold;
   color: #fff;
-  text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-  text-align: center;
+  text-shadow: 2px 2px 6px rgba(0,0,0,0.7);
 }
 
 #best-score {
-  font-size: 16px;
+  font-size: clamp(13px, 3.2vw, 20px);
   color: #ffe066;
+  text-shadow: 1px 1px 3px rgba(0,0,0,0.6);
+  margin-top: 2px;
+}
+
+#wind-display {
+  position: absolute;
+  top: max(env(safe-area-inset-top, 0px), 8px);
+  right: 12px;
+  font-size: clamp(13px, 3.2vw, 18px);
+  font-weight: bold;
+  color: #fff;
+  text-shadow: 1px 1px 4px rgba(0,0,0,0.7);
+  padding: 6px 10px;
+  background: rgba(0,0,0,0.25);
+  border-radius: 8px;
 }
 
 #message {
@@ -47,61 +75,91 @@ canvas {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  font-size: 36px;
+  font-size: clamp(22px, 6vw, 42px);
   font-weight: bold;
   color: #fff;
-  text-shadow: 3px 3px 6px rgba(0,0,0,0.6);
+  text-shadow: 3px 3px 8px rgba(0,0,0,0.7);
   text-align: center;
   pointer-events: auto;
   line-height: 1.6;
+  width: 90%;
+  max-width: 500px;
 }
 
 #message .sub {
-  font-size: 18px;
+  font-size: clamp(14px, 3.5vw, 20px);
   display: block;
-  margin-top: 10px;
+  margin-top: 12px;
+  color: #ffe066;
+}
+
+/* Bottom controls area */
+#controls-area {
+  position: absolute;
+  bottom: max(env(safe-area-inset-bottom, 0px), 12px);
+  left: 0; right: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 0 16px;
+}
+
+#angle-display {
+  font-size: clamp(16px, 4vw, 22px);
+  font-weight: bold;
+  color: #fff;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.6);
+  background: rgba(0,0,0,0.3);
+  padding: 6px 16px;
+  border-radius: 20px;
+}
+
+#power-label {
+  font-size: clamp(15px, 3.8vw, 20px);
+  font-weight: bold;
+  color: #fff;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.6);
 }
 
 #power-bar-container {
-  position: absolute;
-  bottom: 40px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 300px;
-  height: 30px;
-  background: rgba(0,0,0,0.3);
-  border-radius: 15px;
-  border: 2px solid #fff;
+  width: min(85vw, 400px);
+  height: clamp(28px, 7vw, 40px);
+  background: rgba(0,0,0,0.35);
+  border-radius: 100px;
+  border: 3px solid rgba(255,255,255,0.7);
   overflow: hidden;
 }
 
 #power-bar {
   height: 100%;
   width: 0%;
-  background: linear-gradient(90deg, #00ff00, #ffff00, #ff0000);
-  border-radius: 13px;
+  background: linear-gradient(90deg, #00ff00, #ffff00, #ff8800, #ff0000);
+  border-radius: 100px;
   transition: none;
 }
 
-#power-label {
+/* Tap hint area */
+#tap-area {
   position: absolute;
-  bottom: 75px;
+  bottom: max(env(safe-area-inset-bottom, 0px), 12px);
   left: 50%;
   transform: translateX(-50%);
-  font-size: 18px;
-  font-weight: bold;
+  pointer-events: auto;
+  padding: 12px 28px;
+  background: rgba(255,255,255,0.15);
+  border: 2px solid rgba(255,255,255,0.4);
+  border-radius: 16px;
+  font-size: clamp(14px, 3.5vw, 18px);
   color: #fff;
   text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+  text-align: center;
+  animation: pulse 1.5s ease-in-out infinite;
 }
 
-#angle-display {
-  position: absolute;
-  bottom: 110px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 16px;
-  color: #fff;
-  text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+@keyframes pulse {
+  0%, 100% { opacity: 0.7; transform: translateX(-50%) scale(1); }
+  50% { opacity: 1; transform: translateX(-50%) scale(1.05); }
 }
 
 .hidden { display: none !important; }
@@ -114,31 +172,48 @@ canvas {
     <div id="distance">距離: 0 m</div>
     <div id="best-score"></div>
   </div>
+  <div id="wind-display" class="hidden">風: なし</div>
   <div id="message">
     🦝 たぬきバッティング ⚾
-    <span class="sub">クリック / タップ でスタート</span>
+    <span class="sub">タップ でスタート！</span>
   </div>
-  <div id="angle-display" class="hidden">角度: 45°</div>
-  <div id="power-label" class="hidden">パワーを決めろ！（クリック / タップ）</div>
-  <div id="power-bar-container" class="hidden">
-    <div id="power-bar"></div>
+  <div id="controls-area">
+    <div id="angle-display" class="hidden">角度: 45°</div>
+    <div id="power-label" class="hidden">パワーを決めろ！</div>
+    <div id="power-bar-container" class="hidden">
+      <div id="power-bar"></div>
+    </div>
   </div>
+  <div id="tap-area" class="hidden">タップ！</div>
 </div>
 
 <script>
 // ===== Canvas Setup =====
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
+const dpr = window.devicePixelRatio || 1;
 
 function resize() {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
+  const w = window.innerWidth;
+  const h = window.innerHeight;
+  canvas.width = w * dpr;
+  canvas.height = h * dpr;
+  canvas.style.width = w + 'px';
+  canvas.style.height = h + 'px';
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 }
 resize();
 window.addEventListener('resize', resize);
 
+// Logical dimensions (CSS pixels)
+function W() { return window.innerWidth; }
+function H() { return window.innerHeight; }
+
+// Scale factor: base design is 800px wide
+function S() { return Math.min(W(), H()) / 500; }
+
 // ===== Game State =====
-const GROUND_Y_RATIO = 0.75;
+const GROUND_Y_RATIO = 0.72;
 let groundY;
 
 const State = {
@@ -174,65 +249,68 @@ let particles = [];
 
 // ===== Drawing Helpers =====
 function drawSky() {
-  const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  const grad = ctx.createLinearGradient(0, 0, 0, H());
   grad.addColorStop(0, '#4a90d9');
   grad.addColorStop(0.5, '#87CEEB');
   grad.addColorStop(0.7, '#b0e0f0');
   ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillRect(0, 0, W(), H());
 }
 
 function drawClouds(time) {
-  ctx.fillStyle = 'rgba(255,255,255,0.7)';
+  ctx.fillStyle = 'rgba(255,255,255,0.6)';
+  const s = S();
   for (let i = 0; i < 5; i++) {
-    let cx = ((i * 400 + time * 0.02 - cameraX * 0.1) % (canvas.width + 200)) - 100;
-    let cy = 60 + i * 50;
+    let cx = ((i * 300 * s + time * 0.015 - cameraX * 0.1) % (W() + 200)) - 100;
+    let cy = 40 + i * 40 * s;
     ctx.beginPath();
-    ctx.ellipse(cx, cy, 60, 25, 0, 0, Math.PI * 2);
+    ctx.ellipse(cx, cy, 50 * s, 20 * s, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.beginPath();
-    ctx.ellipse(cx - 30, cy + 10, 40, 20, 0, 0, Math.PI * 2);
+    ctx.ellipse(cx - 25 * s, cy + 8 * s, 35 * s, 16 * s, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.beginPath();
-    ctx.ellipse(cx + 35, cy + 8, 45, 22, 0, 0, Math.PI * 2);
+    ctx.ellipse(cx + 30 * s, cy + 6 * s, 38 * s, 18 * s, 0, 0, Math.PI * 2);
     ctx.fill();
   }
 }
 
 function drawGround() {
-  groundY = canvas.height * GROUND_Y_RATIO;
+  groundY = H() * GROUND_Y_RATIO;
 
-  // Ground
-  const grad = ctx.createLinearGradient(0, groundY, 0, canvas.height);
+  const grad = ctx.createLinearGradient(0, groundY, 0, H());
   grad.addColorStop(0, '#4CAF50');
   grad.addColorStop(0.3, '#388E3C');
   grad.addColorStop(1, '#2E7D32');
   ctx.fillStyle = grad;
-  ctx.fillRect(0, groundY, canvas.width, canvas.height - groundY);
+  ctx.fillRect(0, groundY, W(), H() - groundY);
 
   // Grass line
   ctx.strokeStyle = '#66BB6A';
   ctx.lineWidth = 2;
   ctx.beginPath();
   ctx.moveTo(0, groundY);
-  ctx.lineTo(canvas.width, groundY);
+  ctx.lineTo(W(), groundY);
   ctx.stroke();
 }
 
 function drawDistanceMarkers() {
-  ctx.fillStyle = 'rgba(255,255,255,0.6)';
-  ctx.font = '12px sans-serif';
+  const s = S();
   ctx.textAlign = 'center';
 
-  for (let m = 50; m < 10000; m += 50) {
-    let x = batterX + m * 3 - cameraX;
-    if (x < -20 || x > canvas.width + 20) continue;
+  const meterScale = 3 * s;
 
-    ctx.fillStyle = m % 100 === 0 ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.4)';
-    ctx.fillRect(x - 1, groundY - 10, 2, 20);
-    if (m % 100 === 0) {
+  for (let m = 50; m < 10000; m += 50) {
+    let x = batterX + m * meterScale - cameraX;
+    if (x < -20 || x > W() + 20) continue;
+
+    const isMajor = m % 100 === 0;
+    ctx.fillStyle = isMajor ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.4)';
+    ctx.fillRect(x - 1, groundY - 8, 2, 16);
+    if (isMajor) {
       ctx.fillStyle = '#fff';
-      ctx.fillText(m + 'm', x, groundY - 15);
+      ctx.font = `bold ${Math.round(11 * s)}px sans-serif`;
+      ctx.fillText(m + 'm', x, groundY - 12);
     }
   }
 }
@@ -243,7 +321,7 @@ function drawTanuki(x, y, size, rotation) {
   ctx.translate(sx, y);
   ctx.rotate(rotation || 0);
 
-  const s = size || 20;
+  const s = size * S();
 
   // Body
   ctx.fillStyle = '#8B6914';
@@ -306,7 +384,7 @@ function drawTanuki(x, y, size, rotation) {
 
   // Mouth
   ctx.strokeStyle = '#000';
-  ctx.lineWidth = 1.5;
+  ctx.lineWidth = 1.5 * S();
   ctx.beginPath();
   ctx.arc(0, -s * 0.55, s * 0.1, 0.1, Math.PI - 0.1);
   ctx.stroke();
@@ -328,8 +406,10 @@ function drawTanuki(x, y, size, rotation) {
 
 function drawBatter(x, y, swingAngle) {
   const sx = x - cameraX;
+  const s = S();
   ctx.save();
   ctx.translate(sx, y);
+  ctx.scale(s, s);
 
   // Body
   ctx.fillStyle = '#333';
@@ -358,7 +438,6 @@ function drawBatter(x, y, swingAngle) {
   ctx.rotate(swingAngle);
   ctx.fillStyle = '#D2691E';
   ctx.fillRect(0, -3, 50, 6);
-  // Bat knob
   ctx.fillStyle = '#8B4513';
   ctx.fillRect(46, -5, 8, 10);
   ctx.restore();
@@ -367,60 +446,51 @@ function drawBatter(x, y, swingAngle) {
 }
 
 function drawAngleIndicator() {
-  const sx = batterX - cameraX + 10;
-  const sy = batterY - 35;
-  const len = 80;
+  const s = S();
+  const sx = batterX - cameraX + 10 * s;
+  const sy = batterY - 35 * s;
+  const len = 70 * s;
   const rad = -angle * Math.PI / 180;
 
-  ctx.strokeStyle = 'rgba(255, 255, 0, 0.7)';
-  ctx.lineWidth = 2;
-  ctx.setLineDash([5, 5]);
+  ctx.strokeStyle = 'rgba(255, 255, 0, 0.8)';
+  ctx.lineWidth = 3 * s;
+  ctx.setLineDash([6 * s, 4 * s]);
   ctx.beginPath();
   ctx.moveTo(sx, sy);
   ctx.lineTo(sx + Math.cos(rad) * len, sy + Math.sin(rad) * len);
   ctx.stroke();
   ctx.setLineDash([]);
 
-  // Arrow head
   const ax = sx + Math.cos(rad) * len;
   const ay = sy + Math.sin(rad) * len;
-  ctx.fillStyle = 'rgba(255, 255, 0, 0.8)';
+  ctx.fillStyle = 'rgba(255, 255, 0, 0.9)';
   ctx.beginPath();
   ctx.moveTo(ax, ay);
-  ctx.lineTo(ax - Math.cos(rad - 0.3) * 10, ay - Math.sin(rad - 0.3) * 10);
-  ctx.lineTo(ax - Math.cos(rad + 0.3) * 10, ay - Math.sin(rad + 0.3) * 10);
+  ctx.lineTo(ax - Math.cos(rad - 0.3) * 12 * s, ay - Math.sin(rad - 0.3) * 12 * s);
+  ctx.lineTo(ax - Math.cos(rad + 0.3) * 12 * s, ay - Math.sin(rad + 0.3) * 12 * s);
   ctx.fill();
 }
 
-function drawWindIndicator() {
-  ctx.save();
-  ctx.fillStyle = '#fff';
-  ctx.font = '16px sans-serif';
-  ctx.textAlign = 'right';
-  const windText = wind > 0 ? `風: → ${wind.toFixed(1)} m/s` : wind < 0 ? `風: ← ${Math.abs(wind).toFixed(1)} m/s` : '風: なし';
-  ctx.fillText(windText, canvas.width - 20, 30);
-  ctx.restore();
-}
-
 function spawnParticles(x, y, count, color) {
+  const s = S();
   for (let i = 0; i < count; i++) {
     particles.push({
       x, y,
-      vx: (Math.random() - 0.5) * 8,
-      vy: (Math.random() - 1) * 6,
+      vx: (Math.random() - 0.5) * 8 * s,
+      vy: (Math.random() - 1) * 6 * s,
       life: 1,
       color: color || '#FFD700',
-      size: Math.random() * 4 + 2,
+      size: (Math.random() * 4 + 2) * s,
     });
   }
 }
 
-function updateParticles(dt) {
+function updateParticles() {
   for (let i = particles.length - 1; i >= 0; i--) {
     const p = particles[i];
     p.x += p.vx;
     p.y += p.vy;
-    p.vy += 0.15;
+    p.vy += 0.15 * S();
     p.life -= 0.02;
     if (p.life <= 0) particles.splice(i, 1);
   }
@@ -438,12 +508,14 @@ function drawParticles() {
 }
 
 // ===== Game Logic =====
+const meterScale = () => 3 * S();
+
 function resetGame() {
-  groundY = canvas.height * GROUND_Y_RATIO;
-  batterX = 150;
+  groundY = H() * GROUND_Y_RATIO;
+  batterX = 100 * S();
   batterY = groundY;
-  tanukiX = batterX - 5;
-  tanukiY = groundY - 25;
+  tanukiX = batterX - 5 * S();
+  tanukiY = groundY - 25 * S();
   velX = 0;
   velY = 0;
   cameraX = 0;
@@ -461,7 +533,18 @@ function startAngle() {
   state = State.AIM_ANGLE;
   document.getElementById('message').classList.add('hidden');
   document.getElementById('angle-display').classList.remove('hidden');
+  document.getElementById('wind-display').classList.remove('hidden');
+  document.getElementById('tap-area').classList.remove('hidden');
+  document.getElementById('tap-area').textContent = 'タップで角度決定！';
+  updateWindDisplay();
   angleDir = 1;
+}
+
+function updateWindDisplay() {
+  const el = document.getElementById('wind-display');
+  if (wind > 0.3) el.textContent = `風 → ${wind.toFixed(1)}`;
+  else if (wind < -0.3) el.textContent = `風 ← ${Math.abs(wind).toFixed(1)}`;
+  else el.textContent = '風: なし';
 }
 
 let angleDir = 1;
@@ -477,6 +560,7 @@ function startPower() {
   document.getElementById('angle-display').classList.add('hidden');
   document.getElementById('power-label').classList.remove('hidden');
   document.getElementById('power-bar-container').classList.remove('hidden');
+  document.getElementById('tap-area').textContent = 'タップでパワー決定！';
 }
 
 function updatePower(dt) {
@@ -491,6 +575,7 @@ function startSwing() {
   swingFrame = 0;
   document.getElementById('power-label').classList.add('hidden');
   document.getElementById('power-bar-container').classList.add('hidden');
+  document.getElementById('tap-area').classList.add('hidden');
 }
 
 function updateSwing(dt) {
@@ -502,31 +587,33 @@ function updateSwing(dt) {
 
 function launch() {
   state = State.FLYING;
+  const s = S();
   const rad = angle * Math.PI / 180;
-  const speed = 8 + power * 0.22;
+  const speed = (8 + power * 0.22) * s;
   velX = Math.cos(rad) * speed;
   velY = -Math.sin(rad) * speed;
   spawnParticles(tanukiX, tanukiY, 20, '#ff6600');
 }
 
-const GRAVITY = 0.18;
-const BOUNCE_DAMPING = 0.45;
-const AIR_RESISTANCE = 0.998;
+function updateFlying() {
+  const s = S();
+  const GRAVITY = 0.18 * s;
+  const BOUNCE_DAMPING = 0.45;
+  const AIR_RESISTANCE = 0.998;
 
-function updateFlying(dt) {
-  // Physics (frame-based for simplicity)
   velY += GRAVITY;
-  velX += wind * 0.0008;
+  velX += wind * 0.0008 * s;
   velX *= AIR_RESISTANCE;
   velY *= AIR_RESISTANCE;
 
   tanukiX += velX;
   tanukiY += velY;
 
-  // Ground collision
-  if (tanukiY >= groundY - 15) {
-    tanukiY = groundY - 15;
-    if (Math.abs(velY) > 1) {
+  const groundHit = groundY - 15 * s;
+
+  if (tanukiY >= groundHit) {
+    tanukiY = groundHit;
+    if (Math.abs(velY) > 1 * s) {
       velY = -velY * BOUNCE_DAMPING;
       velX *= 0.85;
       bounceCount++;
@@ -535,21 +622,17 @@ function updateFlying(dt) {
       velY = 0;
     }
 
-    // Stop condition
-    if (Math.abs(velX) < 0.3 && Math.abs(velY) < 1) {
+    if (Math.abs(velX) < 0.3 * s && Math.abs(velY) < 1 * s) {
       showResult();
       return;
     }
 
-    // Friction on ground
     velX *= 0.97;
   }
 
-  // Update distance
-  distance = Math.max(0, (tanukiX - batterX) / 3);
+  distance = Math.max(0, (tanukiX - batterX) / meterScale());
 
-  // Camera follow
-  const targetCam = tanukiX - canvas.width * 0.3;
+  const targetCam = tanukiX - W() * 0.3;
   cameraX += (targetCam - cameraX) * 0.08;
   if (cameraX < 0) cameraX = 0;
 
@@ -576,14 +659,17 @@ function showResult() {
   document.getElementById('best-score').textContent = `ベスト: ${bestDistance} m`;
   document.getElementById('message').innerHTML =
     `${rating}<br>飛距離: ${finalDist} m` +
-    `<span class="sub">クリック / タップ でもう一度</span>`;
+    `<span class="sub">タップ でもう一度</span>`;
   document.getElementById('message').classList.remove('hidden');
+  document.getElementById('wind-display').classList.add('hidden');
+  document.getElementById('tap-area').classList.add('hidden');
 
   spawnParticles(tanukiX, tanukiY, 30, '#FFD700');
 }
 
 // ===== Input =====
-function handleClick() {
+function handleClick(e) {
+  if (e) e.preventDefault();
   switch (state) {
     case State.TITLE:
       resetGame();
@@ -603,7 +689,14 @@ function handleClick() {
 }
 
 canvas.addEventListener('click', handleClick);
-canvas.addEventListener('touchstart', (e) => { e.preventDefault(); handleClick(); }, { passive: false });
+canvas.addEventListener('touchstart', handleClick, { passive: false });
+
+// Also handle taps on the tap-area button
+document.getElementById('tap-area').addEventListener('click', handleClick);
+document.getElementById('tap-area').addEventListener('touchstart', handleClick, { passive: false });
+
+// Prevent default touch behaviors globally
+document.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
 
 // ===== Main Loop =====
 let lastTime = 0;
@@ -626,11 +719,11 @@ function loop(timestamp) {
       updateSwing(dt);
       break;
     case State.FLYING:
-      updateFlying(dt);
+      updateFlying();
       break;
   }
 
-  updateParticles(dt);
+  updateParticles();
 
   // Draw
   drawSky();
@@ -649,8 +742,7 @@ function loop(timestamp) {
 
   // Draw tanuki
   if (state === State.FLYING) {
-    const rot = gameTime * 0.01;
-    drawTanuki(tanukiX, tanukiY, 18, rot);
+    drawTanuki(tanukiX, tanukiY, 18, gameTime * 0.01);
   } else if (state === State.RESULT) {
     drawTanuki(tanukiX, tanukiY, 18, 0);
   } else if (state !== State.TITLE) {
@@ -662,15 +754,10 @@ function loop(timestamp) {
     drawAngleIndicator();
   }
 
-  // Wind indicator
-  if (state !== State.TITLE) {
-    drawWindIndicator();
-  }
-
   drawParticles();
 
   // Flying trail
-  if (state === State.FLYING && Math.abs(velX) > 1) {
+  if (state === State.FLYING && Math.abs(velX) > 1 * S()) {
     spawnParticles(tanukiX, tanukiY, 1, 'rgba(255,255,255,0.5)');
   }
 
