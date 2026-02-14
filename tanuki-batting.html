@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>たぬきバッティング 🦝⚾</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  overflow: hidden;
+  background: linear-gradient(180deg, #87CEEB 0%, #87CEEB 60%, #90EE90 60%, #228B22 100%);
+  font-family: 'Segoe UI', 'Hiragino Sans', sans-serif;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+canvas {
+  display: block;
+}
+
+#ui-overlay {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+}
+
+#score-display {
+  position: absolute;
+  top: 20px; left: 50%;
+  transform: translateX(-50%);
+  font-size: 28px;
+  font-weight: bold;
+  color: #fff;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+  text-align: center;
+}
+
+#best-score {
+  font-size: 16px;
+  color: #ffe066;
+}
+
+#message {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 36px;
+  font-weight: bold;
+  color: #fff;
+  text-shadow: 3px 3px 6px rgba(0,0,0,0.6);
+  text-align: center;
+  pointer-events: auto;
+  line-height: 1.6;
+}
+
+#message .sub {
+  font-size: 18px;
+  display: block;
+  margin-top: 10px;
+}
+
+#power-bar-container {
+  position: absolute;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 300px;
+  height: 30px;
+  background: rgba(0,0,0,0.3);
+  border-radius: 15px;
+  border: 2px solid #fff;
+  overflow: hidden;
+}
+
+#power-bar {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #00ff00, #ffff00, #ff0000);
+  border-radius: 13px;
+  transition: none;
+}
+
+#power-label {
+  position: absolute;
+  bottom: 75px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 18px;
+  font-weight: bold;
+  color: #fff;
+  text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+}
+
+#angle-display {
+  position: absolute;
+  bottom: 110px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 16px;
+  color: #fff;
+  text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+}
+
+.hidden { display: none !important; }
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<div id="ui-overlay">
+  <div id="score-display">
+    <div id="distance">距離: 0 m</div>
+    <div id="best-score"></div>
+  </div>
+  <div id="message">
+    🦝 たぬきバッティング ⚾
+    <span class="sub">クリック / タップ でスタート</span>
+  </div>
+  <div id="angle-display" class="hidden">角度: 45°</div>
+  <div id="power-label" class="hidden">パワーを決めろ！（クリック / タップ）</div>
+  <div id="power-bar-container" class="hidden">
+    <div id="power-bar"></div>
+  </div>
+</div>
+
+<script>
+// ===== Canvas Setup =====
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+
+function resize() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener('resize', resize);
+
+// ===== Game State =====
+const GROUND_Y_RATIO = 0.75;
+let groundY;
+
+const State = {
+  TITLE: 0,
+  AIM_ANGLE: 1,
+  AIM_POWER: 2,
+  SWING: 3,
+  FLYING: 4,
+  RESULT: 5,
+};
+
+let state = State.TITLE;
+let bestDistance = parseFloat(localStorage.getItem('tanuki_best') || '0');
+
+// Physics
+let tanukiX, tanukiY, velX, velY;
+let angle = 45;
+let power = 0;
+let powerDir = 1;
+let cameraX = 0;
+let distance = 0;
+let bounceCount = 0;
+let swingFrame = 0;
+
+// Batter position
+let batterX, batterY;
+
+// Wind
+let wind = 0;
+
+// Particles
+let particles = [];
+
+// ===== Drawing Helpers =====
+function drawSky() {
+  const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  grad.addColorStop(0, '#4a90d9');
+  grad.addColorStop(0.5, '#87CEEB');
+  grad.addColorStop(0.7, '#b0e0f0');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+}
+
+function drawClouds(time) {
+  ctx.fillStyle = 'rgba(255,255,255,0.7)';
+  for (let i = 0; i < 5; i++) {
+    let cx = ((i * 400 + time * 0.02 - cameraX * 0.1) % (canvas.width + 200)) - 100;
+    let cy = 60 + i * 50;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, 60, 25, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(cx - 30, cy + 10, 40, 20, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(cx + 35, cy + 8, 45, 22, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function drawGround() {
+  groundY = canvas.height * GROUND_Y_RATIO;
+
+  // Ground
+  const grad = ctx.createLinearGradient(0, groundY, 0, canvas.height);
+  grad.addColorStop(0, '#4CAF50');
+  grad.addColorStop(0.3, '#388E3C');
+  grad.addColorStop(1, '#2E7D32');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, groundY, canvas.width, canvas.height - groundY);
+
+  // Grass line
+  ctx.strokeStyle = '#66BB6A';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(0, groundY);
+  ctx.lineTo(canvas.width, groundY);
+  ctx.stroke();
+}
+
+function drawDistanceMarkers() {
+  ctx.fillStyle = 'rgba(255,255,255,0.6)';
+  ctx.font = '12px sans-serif';
+  ctx.textAlign = 'center';
+
+  for (let m = 50; m < 10000; m += 50) {
+    let x = batterX + m * 3 - cameraX;
+    if (x < -20 || x > canvas.width + 20) continue;
+
+    ctx.fillStyle = m % 100 === 0 ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.4)';
+    ctx.fillRect(x - 1, groundY - 10, 2, 20);
+    if (m % 100 === 0) {
+      ctx.fillStyle = '#fff';
+      ctx.fillText(m + 'm', x, groundY - 15);
+    }
+  }
+}
+
+function drawTanuki(x, y, size, rotation) {
+  const sx = x - cameraX;
+  ctx.save();
+  ctx.translate(sx, y);
+  ctx.rotate(rotation || 0);
+
+  const s = size || 20;
+
+  // Body
+  ctx.fillStyle = '#8B6914';
+  ctx.beginPath();
+  ctx.ellipse(0, 0, s, s * 0.8, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Belly
+  ctx.fillStyle = '#D4A847';
+  ctx.beginPath();
+  ctx.ellipse(0, s * 0.1, s * 0.6, s * 0.5, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Face
+  ctx.fillStyle = '#8B6914';
+  ctx.beginPath();
+  ctx.arc(0, -s * 0.7, s * 0.55, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Ears
+  ctx.fillStyle = '#6B4F12';
+  ctx.beginPath();
+  ctx.arc(-s * 0.4, -s * 1.1, s * 0.18, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(s * 0.4, -s * 1.1, s * 0.18, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Eye patches (tanuki markings)
+  ctx.fillStyle = '#3E2723';
+  ctx.beginPath();
+  ctx.ellipse(-s * 0.22, -s * 0.75, s * 0.18, s * 0.14, -0.2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.ellipse(s * 0.22, -s * 0.75, s * 0.18, s * 0.14, 0.2, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Eyes
+  ctx.fillStyle = '#fff';
+  ctx.beginPath();
+  ctx.arc(-s * 0.2, -s * 0.78, s * 0.1, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(s * 0.2, -s * 0.78, s * 0.1, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = '#000';
+  ctx.beginPath();
+  ctx.arc(-s * 0.18, -s * 0.78, s * 0.05, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(s * 0.22, -s * 0.78, s * 0.05, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Nose
+  ctx.fillStyle = '#000';
+  ctx.beginPath();
+  ctx.arc(0, -s * 0.62, s * 0.06, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Mouth
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(0, -s * 0.55, s * 0.1, 0.1, Math.PI - 0.1);
+  ctx.stroke();
+
+  // Tail
+  ctx.fillStyle = '#8B6914';
+  ctx.beginPath();
+  ctx.ellipse(-s * 0.1, s * 0.6, s * 0.35, s * 0.2, -0.3, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Tail stripes
+  ctx.fillStyle = '#6B4F12';
+  ctx.beginPath();
+  ctx.ellipse(-s * 0.15, s * 0.6, s * 0.1, s * 0.18, -0.3, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.restore();
+}
+
+function drawBatter(x, y, swingAngle) {
+  const sx = x - cameraX;
+  ctx.save();
+  ctx.translate(sx, y);
+
+  // Body
+  ctx.fillStyle = '#333';
+  ctx.fillRect(-12, -50, 24, 40);
+
+  // Head
+  ctx.fillStyle = '#ffcc99';
+  ctx.beginPath();
+  ctx.arc(0, -60, 15, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Helmet
+  ctx.fillStyle = '#1565C0';
+  ctx.beginPath();
+  ctx.arc(0, -63, 16, Math.PI, 2 * Math.PI);
+  ctx.fill();
+
+  // Legs
+  ctx.fillStyle = '#555';
+  ctx.fillRect(-10, -10, 8, 25);
+  ctx.fillRect(2, -10, 8, 25);
+
+  // Bat
+  ctx.save();
+  ctx.translate(10, -35);
+  ctx.rotate(swingAngle);
+  ctx.fillStyle = '#D2691E';
+  ctx.fillRect(0, -3, 50, 6);
+  // Bat knob
+  ctx.fillStyle = '#8B4513';
+  ctx.fillRect(46, -5, 8, 10);
+  ctx.restore();
+
+  ctx.restore();
+}
+
+function drawAngleIndicator() {
+  const sx = batterX - cameraX + 10;
+  const sy = batterY - 35;
+  const len = 80;
+  const rad = -angle * Math.PI / 180;
+
+  ctx.strokeStyle = 'rgba(255, 255, 0, 0.7)';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([5, 5]);
+  ctx.beginPath();
+  ctx.moveTo(sx, sy);
+  ctx.lineTo(sx + Math.cos(rad) * len, sy + Math.sin(rad) * len);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Arrow head
+  const ax = sx + Math.cos(rad) * len;
+  const ay = sy + Math.sin(rad) * len;
+  ctx.fillStyle = 'rgba(255, 255, 0, 0.8)';
+  ctx.beginPath();
+  ctx.moveTo(ax, ay);
+  ctx.lineTo(ax - Math.cos(rad - 0.3) * 10, ay - Math.sin(rad - 0.3) * 10);
+  ctx.lineTo(ax - Math.cos(rad + 0.3) * 10, ay - Math.sin(rad + 0.3) * 10);
+  ctx.fill();
+}
+
+function drawWindIndicator() {
+  ctx.save();
+  ctx.fillStyle = '#fff';
+  ctx.font = '16px sans-serif';
+  ctx.textAlign = 'right';
+  const windText = wind > 0 ? `風: → ${wind.toFixed(1)} m/s` : wind < 0 ? `風: ← ${Math.abs(wind).toFixed(1)} m/s` : '風: なし';
+  ctx.fillText(windText, canvas.width - 20, 30);
+  ctx.restore();
+}
+
+function spawnParticles(x, y, count, color) {
+  for (let i = 0; i < count; i++) {
+    particles.push({
+      x, y,
+      vx: (Math.random() - 0.5) * 8,
+      vy: (Math.random() - 1) * 6,
+      life: 1,
+      color: color || '#FFD700',
+      size: Math.random() * 4 + 2,
+    });
+  }
+}
+
+function updateParticles(dt) {
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    p.x += p.vx;
+    p.y += p.vy;
+    p.vy += 0.15;
+    p.life -= 0.02;
+    if (p.life <= 0) particles.splice(i, 1);
+  }
+}
+
+function drawParticles() {
+  for (const p of particles) {
+    ctx.globalAlpha = p.life;
+    ctx.fillStyle = p.color;
+    ctx.beginPath();
+    ctx.arc(p.x - cameraX, p.y, p.size, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+
+// ===== Game Logic =====
+function resetGame() {
+  groundY = canvas.height * GROUND_Y_RATIO;
+  batterX = 150;
+  batterY = groundY;
+  tanukiX = batterX - 5;
+  tanukiY = groundY - 25;
+  velX = 0;
+  velY = 0;
+  cameraX = 0;
+  distance = 0;
+  bounceCount = 0;
+  swingFrame = 0;
+  power = 0;
+  powerDir = 1;
+  angle = 45;
+  wind = (Math.random() - 0.3) * 6;
+  particles = [];
+}
+
+function startAngle() {
+  state = State.AIM_ANGLE;
+  document.getElementById('message').classList.add('hidden');
+  document.getElementById('angle-display').classList.remove('hidden');
+  angleDir = 1;
+}
+
+let angleDir = 1;
+function updateAngle(dt) {
+  angle += angleDir * 60 * dt;
+  if (angle > 80) { angle = 80; angleDir = -1; }
+  if (angle < 10) { angle = 10; angleDir = 1; }
+  document.getElementById('angle-display').textContent = `角度: ${Math.round(angle)}°`;
+}
+
+function startPower() {
+  state = State.AIM_POWER;
+  document.getElementById('angle-display').classList.add('hidden');
+  document.getElementById('power-label').classList.remove('hidden');
+  document.getElementById('power-bar-container').classList.remove('hidden');
+}
+
+function updatePower(dt) {
+  power += powerDir * 80 * dt;
+  if (power > 100) { power = 100; powerDir = -1; }
+  if (power < 0) { power = 0; powerDir = 1; }
+  document.getElementById('power-bar').style.width = power + '%';
+}
+
+function startSwing() {
+  state = State.SWING;
+  swingFrame = 0;
+  document.getElementById('power-label').classList.add('hidden');
+  document.getElementById('power-bar-container').classList.add('hidden');
+}
+
+function updateSwing(dt) {
+  swingFrame += dt * 6;
+  if (swingFrame >= 1) {
+    launch();
+  }
+}
+
+function launch() {
+  state = State.FLYING;
+  const rad = angle * Math.PI / 180;
+  const speed = 8 + power * 0.22;
+  velX = Math.cos(rad) * speed;
+  velY = -Math.sin(rad) * speed;
+  spawnParticles(tanukiX, tanukiY, 20, '#ff6600');
+}
+
+const GRAVITY = 0.18;
+const BOUNCE_DAMPING = 0.45;
+const AIR_RESISTANCE = 0.998;
+
+function updateFlying(dt) {
+  // Physics (frame-based for simplicity)
+  velY += GRAVITY;
+  velX += wind * 0.0008;
+  velX *= AIR_RESISTANCE;
+  velY *= AIR_RESISTANCE;
+
+  tanukiX += velX;
+  tanukiY += velY;
+
+  // Ground collision
+  if (tanukiY >= groundY - 15) {
+    tanukiY = groundY - 15;
+    if (Math.abs(velY) > 1) {
+      velY = -velY * BOUNCE_DAMPING;
+      velX *= 0.85;
+      bounceCount++;
+      spawnParticles(tanukiX, groundY, 8, '#8B6914');
+    } else {
+      velY = 0;
+    }
+
+    // Stop condition
+    if (Math.abs(velX) < 0.3 && Math.abs(velY) < 1) {
+      showResult();
+      return;
+    }
+
+    // Friction on ground
+    velX *= 0.97;
+  }
+
+  // Update distance
+  distance = Math.max(0, (tanukiX - batterX) / 3);
+
+  // Camera follow
+  const targetCam = tanukiX - canvas.width * 0.3;
+  cameraX += (targetCam - cameraX) * 0.08;
+  if (cameraX < 0) cameraX = 0;
+
+  document.getElementById('distance').textContent = `距離: ${Math.round(distance)} m`;
+}
+
+function showResult() {
+  state = State.RESULT;
+  const finalDist = Math.round(distance);
+
+  if (finalDist > bestDistance) {
+    bestDistance = finalDist;
+    localStorage.setItem('tanuki_best', bestDistance.toString());
+  }
+
+  let rating = '';
+  if (finalDist < 50) rating = '💤 もっとがんばれ！';
+  else if (finalDist < 150) rating = '👍 まあまあ！';
+  else if (finalDist < 300) rating = '🔥 ナイスバッティング！';
+  else if (finalDist < 500) rating = '⭐ すごい！ホームラン！';
+  else rating = '🏆 伝説のたぬき打ち！！';
+
+  document.getElementById('distance').textContent = `距離: ${finalDist} m`;
+  document.getElementById('best-score').textContent = `ベスト: ${bestDistance} m`;
+  document.getElementById('message').innerHTML =
+    `${rating}<br>飛距離: ${finalDist} m` +
+    `<span class="sub">クリック / タップ でもう一度</span>`;
+  document.getElementById('message').classList.remove('hidden');
+
+  spawnParticles(tanukiX, tanukiY, 30, '#FFD700');
+}
+
+// ===== Input =====
+function handleClick() {
+  switch (state) {
+    case State.TITLE:
+      resetGame();
+      startAngle();
+      break;
+    case State.AIM_ANGLE:
+      startPower();
+      break;
+    case State.AIM_POWER:
+      startSwing();
+      break;
+    case State.RESULT:
+      resetGame();
+      startAngle();
+      break;
+  }
+}
+
+canvas.addEventListener('click', handleClick);
+canvas.addEventListener('touchstart', (e) => { e.preventDefault(); handleClick(); }, { passive: false });
+
+// ===== Main Loop =====
+let lastTime = 0;
+let gameTime = 0;
+
+function loop(timestamp) {
+  const dt = Math.min((timestamp - lastTime) / 1000, 0.05);
+  lastTime = timestamp;
+  gameTime = timestamp;
+
+  // Update
+  switch (state) {
+    case State.AIM_ANGLE:
+      updateAngle(dt);
+      break;
+    case State.AIM_POWER:
+      updatePower(dt);
+      break;
+    case State.SWING:
+      updateSwing(dt);
+      break;
+    case State.FLYING:
+      updateFlying(dt);
+      break;
+  }
+
+  updateParticles(dt);
+
+  // Draw
+  drawSky();
+  drawClouds(gameTime);
+  drawGround();
+  drawDistanceMarkers();
+
+  // Draw batter
+  let batAngle = -Math.PI / 3;
+  if (state === State.SWING) {
+    batAngle = -Math.PI / 3 + swingFrame * (Math.PI * 0.8);
+  } else if (state === State.FLYING || state === State.RESULT) {
+    batAngle = Math.PI * 0.47;
+  }
+  drawBatter(batterX, batterY, batAngle);
+
+  // Draw tanuki
+  if (state === State.FLYING) {
+    const rot = gameTime * 0.01;
+    drawTanuki(tanukiX, tanukiY, 18, rot);
+  } else if (state === State.RESULT) {
+    drawTanuki(tanukiX, tanukiY, 18, 0);
+  } else if (state !== State.TITLE) {
+    drawTanuki(tanukiX, tanukiY, 18, 0);
+  }
+
+  // Angle indicator
+  if (state === State.AIM_ANGLE) {
+    drawAngleIndicator();
+  }
+
+  // Wind indicator
+  if (state !== State.TITLE) {
+    drawWindIndicator();
+  }
+
+  drawParticles();
+
+  // Flying trail
+  if (state === State.FLYING && Math.abs(velX) > 1) {
+    spawnParticles(tanukiX, tanukiY, 1, 'rgba(255,255,255,0.5)');
+  }
+
+  requestAnimationFrame(loop);
+}
+
+// ===== Init =====
+resetGame();
+if (bestDistance > 0) {
+  document.getElementById('best-score').textContent = `ベスト: ${bestDistance} m`;
+}
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
