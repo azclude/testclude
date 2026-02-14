@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 300">
+  <!-- Floor shadow -->
+  <ellipse cx="140" cy="280" rx="130" ry="14" fill="#EEF4F9" opacity="0.6"/>
+
+  <!-- === Table === -->
+  <rect x="80" y="180" rx="6" ry="6" width="120" height="8" fill="#B8C9D9" stroke="#444" stroke-width="2"/>
+  <!-- Table legs -->
+  <line x1="95" y1="188" x2="95" y2="245" stroke="#444" stroke-width="2"/>
+  <line x1="185" y1="188" x2="185" y2="245" stroke="#444" stroke-width="2"/>
+
+  <!-- Document on table -->
+  <rect x="108" y="168" rx="2" ry="2" width="28" height="18" fill="white" stroke="#444" stroke-width="1.5" transform="rotate(-5, 122, 177)"/>
+  <line x1="112" y1="173" x2="130" y2="172" stroke="#B8C9D9" stroke-width="1" stroke-linecap="round"/>
+  <line x1="112" y1="177" x2="128" y2="176" stroke="#B8C9D9" stroke-width="1" stroke-linecap="round"/>
+  <line x1="112" y1="181" x2="125" y2="180" stroke="#B8C9D9" stroke-width="1" stroke-linecap="round"/>
+
+  <!-- Laptop on table -->
+  <rect x="142" y="158" rx="3" ry="3" width="36" height="24" fill="#555" stroke="#444" stroke-width="2"/>
+  <rect x="144" y="160" rx="1" ry="1" width="32" height="18" fill="#6BA4D9" opacity="0.3"/>
+  <rect x="136" y="182" rx="1" ry="1" width="48" height="3" fill="#888" stroke="#444" stroke-width="1"/>
+
+  <!-- === Wife (far left) === -->
+  <!-- Chair -->
+  <rect x="16" y="188" rx="8" ry="8" width="50" height="55" fill="#B8C9D9" stroke="#444" stroke-width="1.5" opacity="0.5"/>
+  <!-- Body -->
+  <path d="M26,230 Q26,190 41,184 Q56,190 56,230" fill="#6BBFB9" stroke="#444" stroke-width="2"/>
+  <!-- Neck -->
+  <rect x="36" y="170" width="10" height="12" rx="3" fill="#FDDCB5" stroke="#444" stroke-width="1.5"/>
+  <!-- Head -->
+  <ellipse cx="41" cy="155" rx="18" ry="20" fill="#FDDCB5" stroke="#444" stroke-width="2"/>
+  <!-- Hair (long) -->
+  <path d="M23,150 Q23,130 41,126 Q59,130 59,150" fill="#555" stroke="#444" stroke-width="2"/>
+  <path d="M23,150 Q20,162 24,170" fill="#555" stroke="#444" stroke-width="1.5"/>
+  <path d="M59,150 Q62,162 58,170" fill="#555" stroke="#444" stroke-width="1.5"/>
+  <!-- Eyes -->
+  <circle cx="34" cy="155" r="2" fill="#444"/>
+  <circle cx="48" cy="155" r="2" fill="#444"/>
+  <!-- Happy smile -->
+  <path d="M35,163 Q41,168 47,163" fill="none" stroke="#444" stroke-width="1.5" stroke-linecap="round"/>
+
+  <!-- === Husband (center left) === -->
+  <!-- Chair -->
+  <rect x="58" y="188" rx="8" ry="8" width="50" height="55" fill="#B8C9D9" stroke="#444" stroke-width="1.5" opacity="0.5"/>
+  <!-- Body -->
+  <path d="M68,230 Q68,186 83,180 Q98,186 98,230" fill="#6BA4D9" stroke="#444" stroke-width="2"/>
+  <!-- Neck -->
+  <rect x="78" y="166" width="10" height="12" rx="3" fill="#FDDCB5" stroke="#444" stroke-width="1.5"/>
+  <!-- Head -->
+  <ellipse cx="83" cy="150" rx="19" ry="21" fill="#FDDCB5" stroke="#444" stroke-width="2"/>
+  <!-- Short hair -->
+  <path d="M64,145 Q64,125 83,122 Q102,125 102,145 L102,138 Q102,128 83,126 Q64,128 64,138 Z" fill="#555" stroke="#444" stroke-width="2"/>
+  <!-- Eyes -->
+  <circle cx="76" cy="150" r="2" fill="#444"/>
+  <circle cx="90" cy="150" r="2" fill="#444"/>
+  <!-- Happy smile -->
+  <path d="M77,158 Q83,163 89,158" fill="none" stroke="#444" stroke-width="1.5" stroke-linecap="round"/>
+
+  <!-- === Advisor (right side) === -->
+  <!-- Chair -->
+  <rect x="186" y="188" rx="8" ry="8" width="60" height="55" fill="#B8C9D9" stroke="#444" stroke-width="1.5" opacity="0.5"/>
+  <!-- Body (slightly larger, professional) -->
+  <path d="M196,236 Q196,182 216,175 Q236,182 236,236" fill="#E5C468" stroke="#444" stroke-width="2"/>
+  <!-- Collar / tie detail -->
+  <path d="M210,186 L216,195 L222,186" fill="white" stroke="#444" stroke-width="1.2"/>
+  <!-- Neck -->
+  <rect x="211" y="162" width="10" height="13" rx="3" fill="#FDDCB5" stroke="#444" stroke-width="1.5"/>
+  <!-- Head -->
+  <ellipse cx="216" cy="145" rx="20" ry="22" fill="#FDDCB5" stroke="#444" stroke-width="2"/>
+  <!-- Professional hair -->
+  <path d="M196,140 Q196,118 216,115 Q236,118 236,140 L236,132 Q236,122 216,120 Q196,122 196,132 Z" fill="#444" stroke="#444" stroke-width="2"/>
+  <!-- Eyes -->
+  <circle cx="209" cy="145" r="2" fill="#444"/>
+  <circle cx="223" cy="145" r="2" fill="#444"/>
+  <!-- Confident smile -->
+  <path d="M210,154 Q216,160 222,154" fill="none" stroke="#444" stroke-width="1.5" stroke-linecap="round"/>
+  <!-- Eyebrows (confident) -->
+  <line x1="205" y1="138" x2="212" y2="139" stroke="#444" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="227" y1="138" x2="220" y2="139" stroke="#444" stroke-width="1.5" stroke-linecap="round"/>
+
+  <!-- Advisor gesturing arm (left hand pointing/explaining) -->
+  <path d="M200,200 Q180,192 175,185" fill="none" stroke="#444" stroke-width="2" stroke-linecap="round"/>
+  <ellipse cx="174" cy="183" rx="5" ry="4" fill="#FDDCB5" stroke="#444" stroke-width="1.5"/>
+
+  <!-- Advisor right arm resting -->
+  <path d="M232,200 Q238,195 240,190" fill="none" stroke="#444" stroke-width="2" stroke-linecap="round"/>
+
+  <!-- Speech lines from advisor (explaining) -->
+  <line x1="160" y1="120" x2="172" y2="120" stroke="#B8C9D9" stroke-width="2" stroke-linecap="round"/>
+  <line x1="156" y1="128" x2="175" y2="128" stroke="#B8C9D9" stroke-width="2" stroke-linecap="round"/>
+  <line x1="160" y1="136" x2="170" y2="136" stroke="#B8C9D9" stroke-width="2" stroke-linecap="round"/>
+</svg>

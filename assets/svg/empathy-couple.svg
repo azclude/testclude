@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 280">
+  <!-- Background accent -->
+  <ellipse cx="170" cy="240" rx="150" ry="20" fill="#EEF4F9" opacity="0.6"/>
+
+  <!-- Sofa -->
+  <rect x="45" y="150" rx="22" ry="22" width="250" height="90" fill="#B8C9D9" stroke="#444" stroke-width="2"/>
+  <rect x="55" y="158" rx="16" ry="16" width="230" height="65" fill="#EEF4F9" stroke="#444" stroke-width="2"/>
+  <!-- Sofa armrests -->
+  <rect x="40" y="148" rx="12" ry="12" width="30" height="80" fill="#B8C9D9" stroke="#444" stroke-width="2"/>
+  <rect x="270" y="148" rx="12" ry="12" width="30" height="80" fill="#B8C9D9" stroke="#444" stroke-width="2"/>
+  <!-- Sofa legs -->
+  <rect x="70" y="235" rx="3" ry="3" width="8" height="14" fill="#444"/>
+  <rect x="262" y="235" rx="3" ry="3" width="8" height="14" fill="#444"/>
+
+  <!-- === Wife (left) === -->
+  <!-- Body / torso -->
+  <path d="M110,155 Q110,120 130,115 Q150,110 150,155" fill="#6BBFB9" stroke="#444" stroke-width="2"/>
+  <!-- Neck -->
+  <rect x="124" y="102" width="12" height="14" rx="3" fill="#FDDCB5" stroke="#444" stroke-width="2"/>
+  <!-- Head -->
+  <ellipse cx="130" cy="86" rx="22" ry="24" fill="#FDDCB5" stroke="#444" stroke-width="2"/>
+  <!-- Hair -->
+  <path d="M108,80 Q108,58 130,55 Q152,58 152,80" fill="#555" stroke="#444" stroke-width="2"/>
+  <path d="M108,80 Q105,90 108,95" fill="#555" stroke="#444" stroke-width="1.5"/>
+  <path d="M152,80 Q155,90 152,95" fill="#555" stroke="#444" stroke-width="1.5"/>
+  <!-- Eyes -->
+  <circle cx="122" cy="86" r="2.5" fill="#444"/>
+  <circle cx="138" cy="86" r="2.5" fill="#444"/>
+  <!-- Worried mouth -->
+  <path d="M124,96 Q130,93 136,96" fill="none" stroke="#444" stroke-width="1.5" stroke-linecap="round"/>
+  <!-- Eyebrows (worried - angled up in middle) -->
+  <line x1="117" y1="78" x2="124" y2="80" stroke="#444" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="143" y1="78" x2="136" y2="80" stroke="#444" stroke-width="1.5" stroke-linecap="round"/>
+  <!-- Wife's hand on cheek -->
+  <ellipse cx="108" cy="90" rx="6" ry="5" fill="#FDDCB5" stroke="#444" stroke-width="1.5"/>
+  <!-- Wife's arm going to cheek -->
+  <path d="M115,140 Q100,120 108,92" fill="none" stroke="#444" stroke-width="2" stroke-linecap="round"/>
+
+  <!-- === Husband (right) === -->
+  <!-- Body / torso -->
+  <path d="M190,155 Q190,115 210,110 Q230,115 230,155" fill="#6BA4D9" stroke="#444" stroke-width="2"/>
+  <!-- Neck -->
+  <rect x="204" y="98" width="12" height="14" rx="3" fill="#FDDCB5" stroke="#444" stroke-width="2"/>
+  <!-- Head -->
+  <ellipse cx="210" cy="80" rx="24" ry="26" fill="#FDDCB5" stroke="#444" stroke-width="2"/>
+  <!-- Short hair -->
+  <path d="M186,74 Q186,50 210,47 Q234,50 234,74 L234,68 Q234,52 210,50 Q186,52 186,68 Z" fill="#555" stroke="#444" stroke-width="2"/>
+  <!-- Eyes -->
+  <circle cx="202" cy="80" r="2.5" fill="#444"/>
+  <circle cx="218" cy="80" r="2.5" fill="#444"/>
+  <!-- Confused mouth -->
+  <path d="M204,92 Q210,89 216,91" fill="none" stroke="#444" stroke-width="1.5" stroke-linecap="round"/>
+  <!-- Eyebrows (confused) -->
+  <line x1="197" y1="73" x2="205" y2="74" stroke="#444" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="223" y1="72" x2="215" y2="74" stroke="#444" stroke-width="1.5" stroke-linecap="round"/>
+  <!-- Husband's arm scratching head -->
+  <path d="M225,135 Q240,110 232,65" fill="none" stroke="#444" stroke-width="2" stroke-linecap="round"/>
+  <ellipse cx="232" cy="62" rx="6" ry="5" fill="#FDDCB5" stroke="#444" stroke-width="1.5"/>
+
+  <!-- === Thought bubbles === -->
+  <!-- Left thought bubble cluster -->
+  <circle cx="100" cy="48" r="4" fill="#EEF4F9" stroke="#B8C9D9" stroke-width="1.5"/>
+  <circle cx="92" cy="34" r="6" fill="#EEF4F9" stroke="#B8C9D9" stroke-width="1.5"/>
+  <circle cx="82" cy="16" r="12" fill="#EEF4F9" stroke="#B8C9D9" stroke-width="1.5"/>
+  <!-- Question mark in bubble (SVG path) -->
+  <path d="M79,12 Q79,8 82,8 Q85,8 85,11 Q85,13 82,14 L82,17" fill="none" stroke="#B8C9D9" stroke-width="2" stroke-linecap="round"/>
+  <circle cx="82" cy="20" r="1.2" fill="#B8C9D9"/>
+
+  <!-- Right thought bubble cluster -->
+  <circle cx="248" cy="42" r="4" fill="#EEF4F9" stroke="#B8C9D9" stroke-width="1.5"/>
+  <circle cx="258" cy="28" r="6" fill="#EEF4F9" stroke="#B8C9D9" stroke-width="1.5"/>
+  <circle cx="268" cy="12" r="12" fill="#EEF4F9" stroke="#B8C9D9" stroke-width="1.5"/>
+  <!-- Question mark in bubble (SVG path) -->
+  <path d="M265,8 Q265,4 268,4 Q271,4 271,7 Q271,9 268,10 L268,13" fill="none" stroke="#B8C9D9" stroke-width="2" stroke-linecap="round"/>
+  <circle cx="268" cy="16" r="1.2" fill="#B8C9D9"/>
+</svg>
