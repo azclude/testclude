@@ -53,6 +53,23 @@
     });
   }
 
+  // ---- Transparent header on hero ----
+  var header = document.querySelector('.header');
+  var hero = document.getElementById('hero');
+
+  function updateHeader() {
+    if (!header || !hero) return;
+    var heroBottom = hero.getBoundingClientRect().bottom;
+    if (heroBottom > header.offsetHeight) {
+      header.classList.add('header--transparent');
+    } else {
+      header.classList.remove('header--transparent');
+    }
+  }
+
+  updateHeader();
+  window.addEventListener('scroll', updateHeader, { passive: true });
+
   // ---- Close mobile menu on outside click ----
   document.addEventListener('click', function (e) {
     if (nav && nav.classList.contains('is-open')) {
