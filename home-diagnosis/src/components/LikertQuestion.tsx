@@ -26,21 +26,19 @@ export default function LikertQuestion({
   onSelect,
 }: LikertQuestionProps) {
   return (
-    <div className="bg-white rounded-xl shadow-sm p-5 space-y-4">
+    <div className="card-soft p-5 space-y-4">
       <div>
-        <p className="text-base font-medium text-gray-900">{questionText}</p>
+        <p className="text-sm font-medium text-[#3e3a36] leading-relaxed">{questionText}</p>
         {helpText && (
-          <p className="text-xs text-gray-500 mt-1">{helpText}</p>
+          <p className="text-xs text-[#78716c] mt-1.5">{helpText}</p>
         )}
       </div>
       <div className="space-y-2">
         {LIKERT_OPTIONS.map((opt) => (
           <label
             key={opt.value}
-            className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors ${
-              selectedValue === opt.value
-                ? 'bg-blue-50 border-2 border-blue-400'
-                : 'bg-gray-50 border-2 border-transparent hover:bg-gray-100'
+            className={`option-card ${
+              selectedValue === opt.value ? 'option-card--selected' : ''
             }`}
           >
             <input
@@ -49,7 +47,6 @@ export default function LikertQuestion({
               value={opt.value}
               checked={selectedValue === opt.value}
               onChange={() => onSelect(questionId, opt.value)}
-              className="w-4 h-4 text-blue-600"
             />
             <span className="text-sm">{opt.label}</span>
           </label>

@@ -47,7 +47,6 @@ export default function RequirementsPage() {
       const val = answers[q.id as keyof RequirementAnswers];
       if (val === undefined) return false;
       if (q.type === 'selectWithSub' && q.subQuestion) {
-        // Sub question required when parent has "many" or "weekly"
         const parentVal = val as string;
         if (q.id === 'R06' && parentVal === 'many' && subAnswers['R06a'] === undefined) return false;
         if (q.id === 'R07' && parentVal === 'weekly' && subAnswers['R07a'] === undefined) return false;
@@ -84,20 +83,23 @@ export default function RequirementsPage() {
   ).length;
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-2">
-        <h1 className="text-xl font-bold">必要条件</h1>
-        <p className="text-sm text-gray-500">ご家庭の状況を教えてください（世帯で1回）</p>
+    <div className="space-y-5">
+      {/* Header */}
+      <div className="space-y-3">
+        <p className="text-xs font-medium tracking-widest text-[#e87f9a]">STEP 3</p>
+        <h1 className="text-lg font-bold text-[#3e3a36]">必要条件</h1>
+        <p className="text-xs text-[#78716c]">ご家庭の状況を教えてください（世帯で1回）</p>
         <ProgressBar current={answeredCount} total={questions.length} label="回答進捗" />
       </div>
 
+      {/* Questions */}
       <div className="space-y-4">
         {questions.map((q) => (
-          <div key={q.id} className="bg-white rounded-xl shadow-sm p-5 space-y-3">
+          <div key={q.id} className="card-soft p-5 space-y-3">
             <div>
-              <p className="text-base font-medium text-gray-900">{q.text}</p>
+              <p className="text-sm font-medium text-[#3e3a36]">{q.text}</p>
               {HELP_TEXTS[q.id] && (
-                <p className="text-xs text-gray-500 mt-1">{HELP_TEXTS[q.id]}</p>
+                <p className="text-xs text-[#78716c] mt-1">{HELP_TEXTS[q.id]}</p>
               )}
             </div>
             <div className="space-y-2">
@@ -107,18 +109,13 @@ export default function RequirementsPage() {
                 return (
                   <label
                     key={String(opt.value)}
-                    className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors ${
-                      isSelected
-                        ? 'bg-blue-50 border-2 border-blue-400'
-                        : 'bg-gray-50 border-2 border-transparent hover:bg-gray-100'
-                    }`}
+                    className={`option-card ${isSelected ? 'option-card--selected' : ''}`}
                   >
                     <input
                       type="radio"
                       name={q.id}
                       checked={isSelected}
                       onChange={() => handleSelect(q.id, opt.value)}
-                      className="w-4 h-4 text-blue-600"
                     />
                     <span className="text-sm">{opt.label}</span>
                   </label>
@@ -135,8 +132,8 @@ export default function RequirementsPage() {
                   (q.id === 'R07' && (parentVal === 'weekly' || parentVal === 'monthly'));
                 if (!showSub) return null;
                 return (
-                  <div className="ml-4 mt-3 p-4 bg-blue-50 rounded-lg space-y-2">
-                    <p className="text-sm font-medium text-gray-800">{q.subQuestion.text}</p>
+                  <div className="ml-3 mt-3 p-4 bg-[#fff1f2] rounded-xl space-y-2">
+                    <p className="text-sm font-medium text-[#3e3a36]">{q.subQuestion.text}</p>
                     <div className="space-y-2">
                       {q.subQuestion.options.map((subOpt) => {
                         const subVal = subAnswers[q.subQuestion!.id];
@@ -144,18 +141,13 @@ export default function RequirementsPage() {
                         return (
                           <label
                             key={String(subOpt.value)}
-                            className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors ${
-                              isSubSelected
-                                ? 'bg-white border-2 border-blue-400'
-                                : 'bg-white border-2 border-transparent hover:bg-gray-50'
-                            }`}
+                            className={`option-card ${isSubSelected ? 'option-card--selected' : ''}`}
                           >
                             <input
                               type="radio"
                               name={q.subQuestion!.id}
                               checked={isSubSelected}
                               onChange={() => handleSubAnswer(q.subQuestion!.id, subOpt.value as boolean)}
-                              className="w-4 h-4 text-blue-600"
                             />
                             <span className="text-sm">{subOpt.label}</span>
                           </label>
@@ -170,17 +162,18 @@ export default function RequirementsPage() {
         ))}
       </div>
 
-      <div className="flex justify-between gap-4 pt-4">
+      {/* Navigation */}
+      <div className="flex justify-between gap-3 pt-3">
         <button
           onClick={handlePrev}
-          className="px-6 py-3 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100 transition-colors"
+          className="btn-secondary px-6 py-3 text-sm"
         >
           戻る
         </button>
         <button
           onClick={handleNext}
           disabled={!isComplete()}
-          className="px-6 py-3 rounded-lg bg-blue-600 text-white disabled:opacity-30 disabled:cursor-not-allowed hover:bg-blue-700 transition-colors"
+          className="btn-primary px-6 py-3 text-sm"
         >
           予算へ進む
         </button>

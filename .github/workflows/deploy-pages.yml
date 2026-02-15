@@ -2,7 +2,7 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: ["main", "master", "claude/home-values-diagnostic-mvp-DszjX"]
+    branches: ["main", "master", "claude/**"]
   workflow_dispatch:
 
 permissions:
@@ -35,9 +35,17 @@ jobs:
         working-directory: ./home-diagnosis
         run: pnpm install
 
-      - name: Build
+      - name: Build Next.js app
         working-directory: ./home-diagnosis
         run: pnpm build
+
+      - name: Combine static files and Next.js output
+        run: |
+          mkdir -p _site/diagnosis
+          # Copy root-level static files
+          cp -r index.html assets hitokuchi-banushi-yametoke.html tanuki-batting.html _site/ 2>/dev/null || true
+          # Copy Next.js output into /diagnosis/ subpath
+          cp -r home-diagnosis/out/* _site/diagnosis/
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
@@ -45,7 +53,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./home-diagnosis/out
+          path: ./_site
 
   deploy:
     environment:

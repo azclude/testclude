@@ -33,7 +33,6 @@ export default function BudgetPage() {
   };
 
   const handleSubmit = () => {
-    // Save budget and run diagnosis
     const updatedStore = { ...store, budget: answers };
 
     if (!updatedStore.requirements) {
@@ -81,21 +80,24 @@ export default function BudgetPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-2">
-        <h1 className="text-xl font-bold">予算（任意）</h1>
-        <p className="text-sm text-gray-500">
+    <div className="space-y-5">
+      {/* Header */}
+      <div className="space-y-3">
+        <p className="text-xs font-medium tracking-widest text-[#e87f9a]">STEP 4</p>
+        <h1 className="text-lg font-bold text-[#3e3a36]">予算（任意）</h1>
+        <p className="text-xs text-[#78716c]">
           入力するとローン上限の目安を概算表示します。スキップも可能です。
         </p>
       </div>
 
+      {/* Questions */}
       <div className="space-y-4">
         {budgetQuestions.map((q) => (
-          <div key={q.id} className="bg-white rounded-xl shadow-sm p-5 space-y-3">
+          <div key={q.id} className="card-soft p-5 space-y-3">
             <div>
-              <p className="text-base font-medium text-gray-900">{q.text}</p>
+              <p className="text-sm font-medium text-[#3e3a36]">{q.text}</p>
               {HELP_TEXTS[q.id] && (
-                <p className="text-xs text-gray-500 mt-1">{HELP_TEXTS[q.id]}</p>
+                <p className="text-xs text-[#78716c] mt-1">{HELP_TEXTS[q.id]}</p>
               )}
             </div>
             {q.type === 'number' ? (
@@ -104,7 +106,6 @@ export default function BudgetPage() {
                 placeholder={q.placeholder}
                 value={answers[q.id as keyof BudgetAnswers] ?? ''}
                 onChange={(e) => handleNumberChange(q.id, e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-400 outline-none"
               />
             ) : q.type === 'select' && q.options ? (
               <div className="space-y-2">
@@ -114,18 +115,13 @@ export default function BudgetPage() {
                   return (
                     <label
                       key={String(opt.value)}
-                      className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors ${
-                        isSelected
-                          ? 'bg-blue-50 border-2 border-blue-400'
-                          : 'bg-gray-50 border-2 border-transparent hover:bg-gray-100'
-                      }`}
+                      className={`option-card ${isSelected ? 'option-card--selected' : ''}`}
                     >
                       <input
                         type="radio"
                         name={q.id}
                         checked={isSelected}
                         onChange={() => handleSelectChange(q.id, opt.value)}
-                        className="w-4 h-4 text-blue-600"
                       />
                       <span className="text-sm">{opt.label}</span>
                     </label>
@@ -137,22 +133,23 @@ export default function BudgetPage() {
         ))}
       </div>
 
-      <div className="flex flex-col gap-3 pt-4">
+      {/* Actions */}
+      <div className="flex flex-col gap-3 pt-3">
         <button
           onClick={handleSubmit}
-          className="w-full px-6 py-3 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors font-semibold"
+          className="btn-primary w-full py-3.5 text-sm"
         >
           診断結果を見る
         </button>
         <button
           onClick={handleSkip}
-          className="w-full px-6 py-3 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100 transition-colors"
+          className="btn-secondary w-full py-3 text-sm"
         >
           予算をスキップして結果を見る
         </button>
         <button
           onClick={handlePrev}
-          className="w-full px-6 py-3 rounded-lg text-gray-500 hover:bg-gray-100 transition-colors text-sm"
+          className="w-full py-3 text-xs text-[#78716c] hover:bg-[#faf9f7] rounded-full transition-colors"
         >
           必要条件に戻る
         </button>

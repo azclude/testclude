@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import LikertQuestion from '@/components/LikertQuestion';
 import ProgressBar from '@/components/ProgressBar';
@@ -51,14 +51,11 @@ export default function ValuesPage() {
       setPage(page + 1);
       window.scrollTo(0, 0);
     } else {
-      // Finished this person's questions
       if (store.mode === 'couple' && !isPersonB) {
-        // Switch to person B
         setIsPersonB(true);
         setPage(0);
         window.scrollTo(0, 0);
       } else {
-        // Move to requirements
         router.push('/questions/requirements');
       }
     }
@@ -81,14 +78,20 @@ export default function ValuesPage() {
     : '';
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-2">
-        <h1 className="text-xl font-bold">
-          価値観の質問
-          {personLabel && <span className="text-blue-600 ml-2">（{personLabel}）</span>}
-        </h1>
+    <div className="space-y-5">
+      {/* Header */}
+      <div className="space-y-3">
+        <div className="flex items-center gap-2">
+          <p className="text-xs font-medium tracking-widest text-[#e87f9a]">STEP 2</p>
+          {personLabel && (
+            <span className="text-xs font-medium bg-[#fff1f2] text-[#e87f9a] px-2.5 py-0.5 rounded-full">
+              {personLabel}
+            </span>
+          )}
+        </div>
+        <h1 className="text-lg font-bold text-[#3e3a36]">価値観の質問</h1>
         {store.mode === 'couple' && (
-          <p className="text-sm text-gray-500">
+          <p className="text-xs text-[#78716c]">
             {isPersonB
               ? 'Bさんが同じ26問に回答してください'
               : 'まずAさんが26問に回答してください'}
@@ -101,10 +104,11 @@ export default function ValuesPage() {
         />
       </div>
 
+      {/* Questions */}
       <div className="space-y-4">
         {currentQuestions.map((q, idx) => (
           <div key={q.id}>
-            <div className="text-xs text-gray-400 mb-1">
+            <div className="text-[11px] text-[#78716c] mb-1.5 font-medium">
               Q{page * QUESTIONS_PER_PAGE + idx + 1} / {questions.length}
             </div>
             <LikertQuestion
@@ -118,18 +122,19 @@ export default function ValuesPage() {
         ))}
       </div>
 
-      <div className="flex justify-between gap-4 pt-4">
+      {/* Navigation */}
+      <div className="flex justify-between gap-3 pt-3">
         <button
           onClick={handlePrev}
           disabled={page === 0 && !isPersonB}
-          className="px-6 py-3 rounded-lg border border-gray-300 text-gray-700 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-100 transition-colors"
+          className="btn-secondary px-6 py-3 text-sm"
         >
           戻る
         </button>
         <button
           onClick={handleNext}
           disabled={!allPageAnswered}
-          className="px-6 py-3 rounded-lg bg-blue-600 text-white disabled:opacity-30 disabled:cursor-not-allowed hover:bg-blue-700 transition-colors"
+          className="btn-primary px-6 py-3 text-sm"
         >
           {page < totalPages - 1
             ? '次へ'
