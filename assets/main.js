@@ -27,7 +27,7 @@
 
   // ---- Scroll animations (IntersectionObserver) ----
   var animatedElements = document.querySelectorAll(
-    '.card--promise, .card--topic, .steps__item, .faq__item'
+    '.card--promise, .card--topic, .steps__item, .empathy__card, .faq__item'
   );
 
   if ('IntersectionObserver' in window && animatedElements.length > 0) {
