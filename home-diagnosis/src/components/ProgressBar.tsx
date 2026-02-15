@@ -9,16 +9,16 @@ interface ProgressBarProps {
 export default function ProgressBar({ current, total, label }: ProgressBarProps) {
   const pct = Math.round((current / total) * 100);
   return (
-    <div className="space-y-1">
+    <div className="space-y-1.5">
       {label && (
-        <div className="flex justify-between text-sm text-gray-600">
+        <div className="flex justify-between text-xs text-[#78716c]">
           <span>{label}</span>
-          <span>{current} / {total}</span>
+          <span className="font-medium">{current} / {total}</span>
         </div>
       )}
-      <div className="w-full bg-gray-200 rounded-full h-2">
+      <div className="progress-track">
         <div
-          className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+          className="progress-fill"
           style={{ width: `${pct}%` }}
         />
       </div>

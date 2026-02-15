@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "家づくり価値観診断",
-  description: "注文住宅の価値観診断で、あなたに合った家づくりの方向性を見つけましょう",
+  title: "家づくり価値観診断 | あなたにぴったりの家づくりを見つけよう",
+  description: "たった5分の診断で、あなたの家づくりの価値観タイプ・おすすめ間取り・予算の目安がわかります。",
 };
 
 export default function RootLayout({
@@ -13,8 +13,16 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ja">
-      <body className="bg-gray-50 text-gray-900 min-h-screen">
-        <main className="max-w-2xl mx-auto px-4 py-8">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;600;700&display=swap"
+          rel="stylesheet"
+        />
+      </head>
+      <body className="text-[#3e3a36] min-h-screen" style={{ fontFamily: "'Noto Sans JP', sans-serif" }}>
+        <main className="max-w-lg mx-auto px-5 py-6 pb-12">
           {children}
         </main>
       </body>
