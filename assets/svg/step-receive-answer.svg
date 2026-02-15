@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 60">
+  <!-- Document -->
+  <rect x="10" y="4" rx="4" ry="4" width="36" height="48" fill="white" stroke="#444" stroke-width="2"/>
+
+  <!-- Header area -->
+  <rect x="10" y="4" rx="4" ry="0" width="36" height="10" fill="#6BBFB9" stroke="#444" stroke-width="2"/>
+
+  <!-- Content lines -->
+  <line x1="16" y1="22" x2="38" y2="22" stroke="#B8C9D9" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="16" y1="28" x2="34" y2="28" stroke="#B8C9D9" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="16" y1="34" x2="36" y2="34" stroke="#B8C9D9" stroke-width="1.5" stroke-linecap="round"/>
+
+  <!-- Large checkmark -->
+  <circle cx="42" cy="42" r="10" fill="#6BBFB9" stroke="#444" stroke-width="1.5"/>
+  <polyline points="36,42 40,46 48,37" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
