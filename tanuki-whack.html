@@ -1,0 +1,1363 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>伝説のたぬき叩き</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  overflow: hidden;
+  background: #2d1b0e;
+  font-family: 'Segoe UI', 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+canvas {
+  display: block;
+  cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40"><circle cx="20" cy="8" r="7" fill="%238B4513" stroke="%23000" stroke-width="1.5"/><rect x="17" y="8" width="6" height="28" rx="3" fill="%23D2691E" stroke="%23000" stroke-width="1.5"/></svg>') 20 8, pointer;
+}
+
+#ui-overlay {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 10;
+}
+
+#top-bar {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  background: linear-gradient(180deg, rgba(0,0,0,0.5) 0%, transparent 100%);
+}
+
+#score-display {
+  font-size: 22px;
+  font-weight: bold;
+  color: #FFD700;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+}
+
+#combo-display {
+  font-size: 18px;
+  font-weight: bold;
+  color: #ff6600;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+  transition: transform 0.1s;
+}
+
+#timer-display {
+  font-size: 22px;
+  font-weight: bold;
+  color: #fff;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+}
+
+#level-display {
+  position: absolute;
+  top: 50px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 16px;
+  color: #ffcc66;
+  text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+}
+
+#message-overlay {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: rgba(0,0,0,0.6);
+  pointer-events: auto;
+  z-index: 20;
+}
+
+#message-overlay.hidden { display: none; }
+
+#message-title {
+  font-size: clamp(28px, 6vw, 48px);
+  font-weight: 900;
+  color: #FFD700;
+  text-shadow: 3px 3px 8px rgba(0,0,0,0.8), 0 0 20px rgba(255,215,0,0.4);
+  text-align: center;
+  margin-bottom: 10px;
+  line-height: 1.3;
+}
+
+#message-sub {
+  font-size: clamp(14px, 3vw, 22px);
+  color: #fff;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.6);
+  text-align: center;
+  margin-bottom: 8px;
+  line-height: 1.5;
+  max-width: 90vw;
+}
+
+#message-comment {
+  font-size: clamp(16px, 3.5vw, 26px);
+  font-weight: bold;
+  color: #ff9933;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.6);
+  text-align: center;
+  margin-bottom: 20px;
+  line-height: 1.5;
+  max-width: 90vw;
+}
+
+#message-action {
+  font-size: clamp(14px, 3vw, 20px);
+  color: #ccc;
+  text-align: center;
+  animation: blink 1.2s infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+#floating-texts {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 15;
+}
+
+.float-text {
+  position: absolute;
+  font-weight: 900;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
+  animation: floatUp 1s ease-out forwards;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+@keyframes floatUp {
+  0% { opacity: 1; transform: translateY(0) scale(1); }
+  70% { opacity: 1; transform: translateY(-60px) scale(1.2); }
+  100% { opacity: 0; transform: translateY(-100px) scale(0.8); }
+}
+
+.miss-text {
+  color: #ff4444;
+  font-size: 24px;
+}
+
+.hit-text {
+  color: #FFD700;
+  font-size: 28px;
+}
+
+.combo-text {
+  color: #ff6600;
+  font-size: 34px;
+}
+
+.bonus-text {
+  color: #ff00ff;
+  font-size: 32px;
+}
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+
+<div id="ui-overlay">
+  <div id="top-bar">
+    <div id="score-display">0 点</div>
+    <div id="combo-display"></div>
+    <div id="timer-display">30</div>
+  </div>
+  <div id="level-display"></div>
+</div>
+
+<div id="message-overlay">
+  <div id="message-title">伝説のたぬき叩き</div>
+  <div id="message-sub">穴から出てくるたぬきを叩け！<br>ただしニセモノに注意...</div>
+  <div id="message-comment"></div>
+  <div id="message-action">タップ / クリック でスタート</div>
+</div>
+
+<div id="floating-texts"></div>
+
+<script>
+// ===== Canvas Setup =====
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+
+function resize() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  calculateLayout();
+}
+
+// ===== Layout =====
+let holes = [];
+let holeRadius = 40;
+let tanukiSize = 30;
+
+function calculateLayout() {
+  const w = canvas.width;
+  const h = canvas.height;
+  const isPortrait = h > w;
+
+  holes = [];
+
+  if (isPortrait) {
+    // 3x3 grid for portrait
+    const cols = 3, rows = 3;
+    const startY = h * 0.28;
+    const endY = h * 0.82;
+    const startX = w * 0.15;
+    const endX = w * 0.85;
+    holeRadius = Math.min(w / 8, 50);
+    tanukiSize = holeRadius * 0.75;
+
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        holes.push({
+          x: startX + (endX - startX) * c / (cols - 1),
+          y: startY + (endY - startY) * r / (rows - 1),
+          tanuki: null,
+          hitAnim: 0,
+          missAnim: 0,
+        });
+      }
+    }
+  } else {
+    // 3x3 grid for landscape
+    const cols = 3, rows = 3;
+    const startY = h * 0.25;
+    const endY = h * 0.85;
+    const startX = w * 0.2;
+    const endX = w * 0.8;
+    holeRadius = Math.min(w / 12, 55);
+    tanukiSize = holeRadius * 0.75;
+
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        holes.push({
+          x: startX + (endX - startX) * c / (cols - 1),
+          y: startY + (endY - startY) * r / (rows - 1),
+          tanuki: null,
+          hitAnim: 0,
+          missAnim: 0,
+        });
+      }
+    }
+  }
+}
+
+resize();
+window.addEventListener('resize', resize);
+
+// ===== Game Constants =====
+const GAME_DURATION = 30; // seconds
+const TANUKI_TYPES = {
+  NORMAL: 'normal',       // +10 points, brown tanuki
+  GOLDEN: 'golden',       // +50 points, golden tanuki (rare)
+  BOSS: 'boss',           // +100 points, big tanuki with hat (very rare)
+  BOMB: 'bomb',           // -30 points, dark tanuki with X eyes
+  SPEEDY: 'speedy',       // +20 points, fast tanuki with sweat
+};
+
+// ===== Game State =====
+const State = { TITLE: 0, PLAYING: 1, RESULT: 2 };
+let state = State.TITLE;
+let score = 0;
+let combo = 0;
+let maxCombo = 0;
+let hitCount = 0;
+let missCount = 0;
+let totalSpawned = 0;
+let timeLeft = GAME_DURATION;
+let level = 1;
+let bestScore = parseInt(localStorage.getItem('tanuki_whack_best') || '0');
+let spawnTimer = 0;
+let spawnInterval = 1.2;
+let particles = [];
+let shakeAmount = 0;
+let gameTime = 0;
+let levelUpAnim = 0;
+
+// ===== Funny Comments =====
+const resultComments = {
+  legendary: [
+    "たぬき界に恐れられる存在...",
+    "あなたはもはや伝説の叩き師！",
+    "たぬき「もう出てきたくない...」",
+    "たぬき連合会から苦情が来ています",
+    "国宝級のたぬき叩き！文化財に登録します",
+  ],
+  great: [
+    "たぬき「この人マジでやばい」",
+    "なかなかの腕前！たぬきが震えている",
+    "たぬき師範代の称号を授けよう！",
+    "たぬきの悲鳴が聞こえる...",
+    "このまま行けば伝説になれるかも！",
+  ],
+  good: [
+    "まあまあの成績！たぬきも油断している",
+    "たぬき「ちょっとは痛かったよ」",
+    "中級たぬき叩き士に認定！",
+    "もう少しでたぬきマスターだ！",
+    "たぬきとの戦いはまだ序章...",
+  ],
+  normal: [
+    "たぬき「余裕だったわ〜」",
+    "まだまだ修行が足りません！",
+    "たぬきに舐められています...",
+    "次はもっと叩けるはず！たぶん！",
+    "たぬき「また遊ぼうね〜」",
+  ],
+  bad: [
+    "たぬきが爆笑しています",
+    "たぬき「弱すぎワロタ」",
+    "もしかして...たぬきの味方？",
+    "たぬきに化かされてるのでは？",
+    "たぬき「お菓子くれたら許す」",
+  ],
+};
+
+const hitComments = [
+  "ナイス！", "いいぞ！", "やるね！", "すごい！",
+  "お見事！", "バシッ！", "ドカッ！", "ぽかっ！",
+];
+
+const comboComments = {
+  3: "3コンボ！いい調子！",
+  5: "5コンボ！止まらない！",
+  7: "7コンボ！覚醒してる！",
+  10: "10コンボ！！鬼神の如し！",
+  15: "15コンボ！！！伝説の始まり！",
+  20: "20コンボ！！！！もはや神！",
+};
+
+const missComments = [
+  "あっ...", "逃げた！", "スカッ", "惜しい！",
+  "たぬきニヤリ", "フェイント！",
+];
+
+const bombHitComments = [
+  "ボカーン！偽物だった！",
+  "それニセモノ！",
+  "トラップに引っかかった！",
+  "たぬきの罠にハマった！",
+];
+
+const levelUpComments = [
+  "レベルアップ！たぬき、本気出す！",
+  "速くなるぞ！気をつけろ！",
+  "たぬきたちが怒っている！",
+  "まだまだ行くぞ！",
+  "最高速度突入！",
+];
+
+// ===== Floating Text System =====
+function showFloatingText(x, y, text, className) {
+  const container = document.getElementById('floating-texts');
+  const el = document.createElement('div');
+  el.className = 'float-text ' + className;
+  el.textContent = text;
+  el.style.left = x + 'px';
+  el.style.top = y + 'px';
+  container.appendChild(el);
+  setTimeout(() => el.remove(), 1000);
+}
+
+// ===== Particle System =====
+function spawnParticles(x, y, count, color, speed) {
+  for (let i = 0; i < count; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const spd = (speed || 5) * (0.3 + Math.random() * 0.7);
+    particles.push({
+      x, y,
+      vx: Math.cos(angle) * spd,
+      vy: Math.sin(angle) * spd - 2,
+      life: 1,
+      color: color,
+      size: 2 + Math.random() * 4,
+    });
+  }
+}
+
+function spawnStars(x, y, count) {
+  for (let i = 0; i < count; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const spd = 3 + Math.random() * 5;
+    particles.push({
+      x, y,
+      vx: Math.cos(angle) * spd,
+      vy: Math.sin(angle) * spd - 3,
+      life: 1,
+      color: '#FFD700',
+      size: 3 + Math.random() * 3,
+      isStar: true,
+    });
+  }
+}
+
+function updateParticles(dt) {
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    p.x += p.vx;
+    p.y += p.vy;
+    p.vy += 0.2;
+    p.life -= dt * 2;
+    if (p.life <= 0) particles.splice(i, 1);
+  }
+}
+
+function drawParticles() {
+  for (const p of particles) {
+    ctx.globalAlpha = Math.max(0, p.life);
+    ctx.fillStyle = p.color;
+
+    if (p.isStar) {
+      drawStar(p.x, p.y, p.size, p.size * 0.4, 5);
+    } else {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  ctx.globalAlpha = 1;
+}
+
+function drawStar(cx, cy, outerR, innerR, points) {
+  ctx.beginPath();
+  for (let i = 0; i < points * 2; i++) {
+    const r = i % 2 === 0 ? outerR : innerR;
+    const a = (i * Math.PI / points) - Math.PI / 2;
+    if (i === 0) ctx.moveTo(cx + r * Math.cos(a), cy + r * Math.sin(a));
+    else ctx.lineTo(cx + r * Math.cos(a), cy + r * Math.sin(a));
+  }
+  ctx.closePath();
+  ctx.fill();
+}
+
+// ===== Drawing Functions =====
+function drawBackground() {
+  // Dirt/ground background
+  const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  grad.addColorStop(0, '#1a472a');
+  grad.addColorStop(0.15, '#2d5a3f');
+  grad.addColorStop(0.3, '#5c3a1e');
+  grad.addColorStop(0.6, '#4a2e14');
+  grad.addColorStop(1, '#3a2210');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Grass at top
+  ctx.fillStyle = '#2d7a3a';
+  ctx.fillRect(0, 0, canvas.width, canvas.height * 0.18);
+
+  // Grass edge
+  const grassY = canvas.height * 0.18;
+  ctx.fillStyle = '#3a8f48';
+  for (let x = 0; x < canvas.width; x += 20) {
+    ctx.beginPath();
+    ctx.moveTo(x, grassY);
+    ctx.quadraticCurveTo(x + 10, grassY + 12, x + 20, grassY);
+    ctx.fill();
+  }
+
+  // Decorative dirt patches
+  ctx.fillStyle = 'rgba(90, 60, 30, 0.3)';
+  for (let i = 0; i < 8; i++) {
+    const px = ((i * 173 + 50) % canvas.width);
+    const py = canvas.height * 0.4 + ((i * 97) % (canvas.height * 0.4));
+    ctx.beginPath();
+    ctx.ellipse(px, py, 30 + i * 5, 15 + i * 2, i * 0.3, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function drawHole(hole) {
+  const { x, y } = hole;
+
+  // Shadow under hole
+  ctx.fillStyle = 'rgba(0,0,0,0.3)';
+  ctx.beginPath();
+  ctx.ellipse(x, y + holeRadius * 0.6, holeRadius * 1.3, holeRadius * 0.4, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Hole (dark ellipse)
+  ctx.fillStyle = '#1a0e06';
+  ctx.beginPath();
+  ctx.ellipse(x, y, holeRadius, holeRadius * 0.45, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Hole rim
+  ctx.strokeStyle = '#3d2b1a';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.ellipse(x, y, holeRadius, holeRadius * 0.45, 0, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // Inner highlight
+  ctx.strokeStyle = '#2a1c0f';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.ellipse(x, y, holeRadius * 0.8, holeRadius * 0.35, 0, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // Hit flash
+  if (hole.hitAnim > 0) {
+    ctx.globalAlpha = hole.hitAnim;
+    ctx.fillStyle = '#FFD700';
+    ctx.beginPath();
+    ctx.ellipse(x, y, holeRadius * 1.3, holeRadius * 0.6, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+
+  // Miss flash
+  if (hole.missAnim > 0) {
+    ctx.globalAlpha = hole.missAnim * 0.5;
+    ctx.fillStyle = '#ff0000';
+    ctx.beginPath();
+    ctx.ellipse(x, y, holeRadius * 1.3, holeRadius * 0.6, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+}
+
+function drawTanuki(x, y, s, type, popProgress, wobble) {
+  ctx.save();
+
+  // Pop-up: tanuki rises from hole
+  const riseOffset = (1 - popProgress) * s * 2.2;
+  const tanukiY = y - s * 0.6 - riseOffset;
+
+  // Clip to hole region (tanuki emerges from hole)
+  ctx.beginPath();
+  ctx.rect(0, 0, canvas.width, y - holeRadius * 0.1);
+  ctx.clip();
+
+  ctx.translate(x, tanukiY);
+
+  // Wobble animation
+  const wobbleAngle = Math.sin(wobble * 8) * 0.08;
+  ctx.rotate(wobbleAngle);
+
+  // Scale based on type
+  let scale = 1;
+  if (type === TANUKI_TYPES.BOSS) scale = 1.3;
+  if (type === TANUKI_TYPES.SPEEDY) scale = 0.85;
+  ctx.scale(scale, scale);
+
+  // Colors based on type
+  let bodyColor, bellyColor, darkColor;
+  switch (type) {
+    case TANUKI_TYPES.GOLDEN:
+      bodyColor = '#DAA520';
+      bellyColor = '#FFD700';
+      darkColor = '#8B6914';
+      break;
+    case TANUKI_TYPES.BOMB:
+      bodyColor = '#4a3a4a';
+      bellyColor = '#6a5a6a';
+      darkColor = '#2a1a2a';
+      break;
+    case TANUKI_TYPES.BOSS:
+      bodyColor = '#8B4513';
+      bellyColor = '#D2691E';
+      darkColor = '#3E1A00';
+      break;
+    case TANUKI_TYPES.SPEEDY:
+      bodyColor = '#a0783c';
+      bellyColor = '#d4b87a';
+      darkColor = '#5a4020';
+      break;
+    default:
+      bodyColor = '#8B6914';
+      bellyColor = '#D4A847';
+      darkColor = '#3E2723';
+  }
+
+  // Body
+  ctx.fillStyle = bodyColor;
+  ctx.beginPath();
+  ctx.ellipse(0, s * 0.15, s * 0.7, s * 0.55, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Belly
+  ctx.fillStyle = bellyColor;
+  ctx.beginPath();
+  ctx.ellipse(0, s * 0.2, s * 0.45, s * 0.35, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Head
+  ctx.fillStyle = bodyColor;
+  ctx.beginPath();
+  ctx.arc(0, -s * 0.35, s * 0.45, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Ears
+  ctx.fillStyle = darkColor;
+  ctx.beginPath();
+  ctx.arc(-s * 0.32, -s * 0.72, s * 0.14, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(s * 0.32, -s * 0.72, s * 0.14, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Inner ears
+  ctx.fillStyle = '#ffb6c1';
+  ctx.beginPath();
+  ctx.arc(-s * 0.32, -s * 0.72, s * 0.08, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(s * 0.32, -s * 0.72, s * 0.08, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Eye patches (tanuki markings)
+  ctx.fillStyle = darkColor;
+  ctx.beginPath();
+  ctx.ellipse(-s * 0.18, -s * 0.4, s * 0.16, s * 0.12, -0.2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.ellipse(s * 0.18, -s * 0.4, s * 0.16, s * 0.12, 0.2, 0, Math.PI * 2);
+  ctx.fill();
+
+  if (type === TANUKI_TYPES.BOMB) {
+    // X eyes for bomb
+    ctx.strokeStyle = '#ff0000';
+    ctx.lineWidth = 2.5;
+    const eyeSize = s * 0.08;
+    // Left X
+    ctx.beginPath();
+    ctx.moveTo(-s * 0.18 - eyeSize, -s * 0.42 - eyeSize);
+    ctx.lineTo(-s * 0.18 + eyeSize, -s * 0.42 + eyeSize);
+    ctx.moveTo(-s * 0.18 + eyeSize, -s * 0.42 - eyeSize);
+    ctx.lineTo(-s * 0.18 - eyeSize, -s * 0.42 + eyeSize);
+    ctx.stroke();
+    // Right X
+    ctx.beginPath();
+    ctx.moveTo(s * 0.18 - eyeSize, -s * 0.42 - eyeSize);
+    ctx.lineTo(s * 0.18 + eyeSize, -s * 0.42 + eyeSize);
+    ctx.moveTo(s * 0.18 + eyeSize, -s * 0.42 - eyeSize);
+    ctx.lineTo(s * 0.18 - eyeSize, -s * 0.42 + eyeSize);
+    ctx.stroke();
+
+    // Angry mark
+    ctx.fillStyle = '#ff3333';
+    ctx.font = `${s * 0.25}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText('💢', s * 0.35, -s * 0.65);
+  } else {
+    // Normal eyes
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.arc(-s * 0.16, -s * 0.42, s * 0.09, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(s * 0.16, -s * 0.42, s * 0.09, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Pupils (look around)
+    const lookX = Math.sin(wobble * 3) * s * 0.02;
+    ctx.fillStyle = '#000';
+    ctx.beginPath();
+    ctx.arc(-s * 0.15 + lookX, -s * 0.42, s * 0.045, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(s * 0.17 + lookX, -s * 0.42, s * 0.045, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Eye sparkle
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.arc(-s * 0.17, -s * 0.44, s * 0.025, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(s * 0.15, -s * 0.44, s * 0.025, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Nose
+  ctx.fillStyle = '#000';
+  ctx.beginPath();
+  ctx.ellipse(0, -s * 0.28, s * 0.06, s * 0.04, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Mouth
+  if (type === TANUKI_TYPES.BOMB) {
+    // Angry mouth
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(0, -s * 0.18, s * 0.08, Math.PI + 0.3, -0.3);
+    ctx.stroke();
+  } else if (type === TANUKI_TYPES.GOLDEN) {
+    // Happy mouth
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(0, -s * 0.23, s * 0.08, 0.2, Math.PI - 0.2);
+    ctx.stroke();
+    // Blush
+    ctx.fillStyle = 'rgba(255,150,150,0.5)';
+    ctx.beginPath();
+    ctx.ellipse(-s * 0.28, -s * 0.3, s * 0.07, s * 0.04, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(s * 0.28, -s * 0.3, s * 0.07, s * 0.04, 0, 0, Math.PI * 2);
+    ctx.fill();
+  } else {
+    // Normal cheeky smile
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(0, -s * 0.22, s * 0.07, 0.1, Math.PI - 0.1);
+    ctx.stroke();
+
+    // Blush
+    ctx.fillStyle = 'rgba(255,180,180,0.4)';
+    ctx.beginPath();
+    ctx.ellipse(-s * 0.26, -s * 0.3, s * 0.06, s * 0.035, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(s * 0.26, -s * 0.3, s * 0.06, s * 0.035, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Special decorations
+  if (type === TANUKI_TYPES.GOLDEN) {
+    // Crown/sparkle
+    ctx.fillStyle = '#FFD700';
+    drawStar(0, -s * 0.85, s * 0.15, s * 0.06, 5);
+    // Glow
+    ctx.globalAlpha = 0.2 + Math.sin(wobble * 5) * 0.1;
+    ctx.fillStyle = '#FFD700';
+    ctx.beginPath();
+    ctx.arc(0, -s * 0.2, s * 0.8, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+
+  if (type === TANUKI_TYPES.BOSS) {
+    // Top hat
+    ctx.fillStyle = '#1a1a2e';
+    ctx.fillRect(-s * 0.25, -s * 1.0, s * 0.5, s * 0.3);
+    ctx.fillRect(-s * 0.35, -s * 0.72, s * 0.7, s * 0.06);
+    // Hat band
+    ctx.fillStyle = '#cc0000';
+    ctx.fillRect(-s * 0.25, -s * 0.76, s * 0.5, s * 0.05);
+    // Monocle
+    ctx.strokeStyle = '#DAA520';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(s * 0.2, -s * 0.42, s * 0.12, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(s * 0.32, -s * 0.42);
+    ctx.lineTo(s * 0.45, -s * 0.1);
+    ctx.stroke();
+  }
+
+  if (type === TANUKI_TYPES.SPEEDY) {
+    // Sweat drops
+    ctx.fillStyle = '#87CEEB';
+    ctx.beginPath();
+    ctx.moveTo(s * 0.4, -s * 0.55);
+    ctx.quadraticCurveTo(s * 0.45, -s * 0.45, s * 0.38, -s * 0.38);
+    ctx.quadraticCurveTo(s * 0.35, -s * 0.47, s * 0.4, -s * 0.55);
+    ctx.fill();
+    // Speed lines
+    ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+    ctx.lineWidth = 1.5;
+    for (let i = 0; i < 3; i++) {
+      const ly = -s * 0.5 + i * s * 0.2;
+      ctx.beginPath();
+      ctx.moveTo(-s * 0.8, ly);
+      ctx.lineTo(-s * 0.5, ly);
+      ctx.stroke();
+    }
+  }
+
+  // Arms (little paws waving)
+  ctx.fillStyle = bodyColor;
+  const armWave = Math.sin(wobble * 6) * 0.3;
+  // Left arm
+  ctx.save();
+  ctx.translate(-s * 0.55, -s * 0.05);
+  ctx.rotate(-0.5 + armWave);
+  ctx.beginPath();
+  ctx.ellipse(0, 0, s * 0.12, s * 0.2, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+  // Right arm
+  ctx.save();
+  ctx.translate(s * 0.55, -s * 0.05);
+  ctx.rotate(0.5 - armWave);
+  ctx.beginPath();
+  ctx.ellipse(0, 0, s * 0.12, s * 0.2, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  ctx.restore();
+}
+
+function drawHoleFront(hole) {
+  const { x, y } = hole;
+
+  // Front rim of hole (covers bottom of tanuki)
+  ctx.fillStyle = '#5c3a1e';
+  ctx.beginPath();
+  ctx.ellipse(x, y + holeRadius * 0.05, holeRadius * 1.05, holeRadius * 0.3, 0, 0, Math.PI);
+  ctx.fill();
+
+  // Rim highlight
+  ctx.fillStyle = '#7a5030';
+  ctx.beginPath();
+  ctx.ellipse(x, y - holeRadius * 0.05, holeRadius * 0.95, holeRadius * 0.15, 0, 0, Math.PI);
+  ctx.fill();
+}
+
+// ===== Tanuki Spawning =====
+function spawnTanuki() {
+  // Find available holes
+  const available = holes.filter(h => h.tanuki === null);
+  if (available.length === 0) return;
+
+  const hole = available[Math.floor(Math.random() * available.length)];
+
+  // Decide type based on level and luck
+  let type = TANUKI_TYPES.NORMAL;
+  const r = Math.random();
+
+  if (r < 0.03 + level * 0.005) {
+    type = TANUKI_TYPES.BOSS;
+  } else if (r < 0.08 + level * 0.008) {
+    type = TANUKI_TYPES.GOLDEN;
+  } else if (r < 0.15 + level * 0.015) {
+    type = TANUKI_TYPES.BOMB;
+  } else if (r < 0.25 + level * 0.02) {
+    type = TANUKI_TYPES.SPEEDY;
+  }
+
+  // Duration based on type and level
+  let stayDuration;
+  const speedFactor = Math.max(0.35, 1 - level * 0.08);
+  switch (type) {
+    case TANUKI_TYPES.SPEEDY:
+      stayDuration = (0.5 + Math.random() * 0.3) * speedFactor;
+      break;
+    case TANUKI_TYPES.BOSS:
+      stayDuration = (1.8 + Math.random() * 0.5) * speedFactor;
+      break;
+    case TANUKI_TYPES.GOLDEN:
+      stayDuration = (0.8 + Math.random() * 0.4) * speedFactor;
+      break;
+    default:
+      stayDuration = (1.0 + Math.random() * 0.6) * speedFactor;
+  }
+
+  hole.tanuki = {
+    type,
+    popProgress: 0,   // 0 = hidden, 1 = fully out
+    phase: 'rising',   // rising, showing, sinking
+    stayDuration,
+    stayTimer: 0,
+    wobbleTime: Math.random() * 100,
+    hit: false,
+  };
+
+  totalSpawned++;
+}
+
+// ===== Game Logic =====
+function resetGame() {
+  score = 0;
+  combo = 0;
+  maxCombo = 0;
+  hitCount = 0;
+  missCount = 0;
+  totalSpawned = 0;
+  timeLeft = GAME_DURATION;
+  level = 1;
+  spawnTimer = 0;
+  spawnInterval = 1.2;
+  particles = [];
+  shakeAmount = 0;
+  levelUpAnim = 0;
+
+  for (const h of holes) {
+    h.tanuki = null;
+    h.hitAnim = 0;
+    h.missAnim = 0;
+  }
+
+  document.getElementById('score-display').textContent = '0 点';
+  document.getElementById('combo-display').textContent = '';
+  document.getElementById('timer-display').textContent = GAME_DURATION.toString();
+  document.getElementById('level-display').textContent = '';
+}
+
+function startGame() {
+  resetGame();
+  state = State.PLAYING;
+  document.getElementById('message-overlay').classList.add('hidden');
+  document.getElementById('level-display').textContent = 'Lv.1 ～ひよっこ叩き師～';
+}
+
+function updateGame(dt) {
+  if (state !== State.PLAYING) return;
+
+  gameTime += dt;
+  timeLeft -= dt;
+
+  if (timeLeft <= 0) {
+    timeLeft = 0;
+    showResult();
+    return;
+  }
+
+  // Timer display
+  const displayTime = Math.ceil(timeLeft);
+  const timerEl = document.getElementById('timer-display');
+  timerEl.textContent = displayTime.toString();
+  if (displayTime <= 5) {
+    timerEl.style.color = '#ff3333';
+    timerEl.style.fontSize = '28px';
+  } else if (displayTime <= 10) {
+    timerEl.style.color = '#ffaa33';
+    timerEl.style.fontSize = '24px';
+  } else {
+    timerEl.style.color = '#fff';
+    timerEl.style.fontSize = '22px';
+  }
+
+  // Level progression
+  const newLevel = Math.min(8, 1 + Math.floor((GAME_DURATION - timeLeft) / 4));
+  if (newLevel > level) {
+    level = newLevel;
+    levelUpAnim = 1;
+    const titles = [
+      '', 'ひよっこ叩き師', '見習い叩き師', '一人前叩き師',
+      'たぬきハンター', '鬼の叩き師', '達人叩き師', 'たぬき殺法伝承者', '伝説の叩き師'
+    ];
+    document.getElementById('level-display').textContent =
+      `Lv.${level} ～${titles[level]}～`;
+
+    const comment = levelUpComments[Math.min(level - 2, levelUpComments.length - 1)];
+    showFloatingText(canvas.width / 2 - 80, canvas.height * 0.15, comment, 'bonus-text');
+  }
+
+  // Spawn tanuki
+  spawnTimer += dt;
+  const baseInterval = Math.max(0.3, spawnInterval - level * 0.1);
+  if (spawnTimer >= baseInterval) {
+    spawnTimer = 0;
+    spawnTanuki();
+    // Sometimes spawn multiple
+    if (level >= 3 && Math.random() < 0.3) {
+      setTimeout(() => { if (state === State.PLAYING) spawnTanuki(); }, 200);
+    }
+    if (level >= 6 && Math.random() < 0.2) {
+      setTimeout(() => { if (state === State.PLAYING) spawnTanuki(); }, 400);
+    }
+  }
+
+  // Update tanuki in holes
+  for (const hole of holes) {
+    if (!hole.tanuki) continue;
+    const t = hole.tanuki;
+    t.wobbleTime += dt;
+
+    switch (t.phase) {
+      case 'rising':
+        t.popProgress += dt * 4;
+        if (t.popProgress >= 1) {
+          t.popProgress = 1;
+          t.phase = 'showing';
+        }
+        break;
+      case 'showing':
+        t.stayTimer += dt;
+        if (t.stayTimer >= t.stayDuration) {
+          t.phase = 'sinking';
+          // Missed this tanuki
+          if (!t.hit && t.type !== TANUKI_TYPES.BOMB) {
+            missCount++;
+            combo = 0;
+            updateComboDisplay();
+          }
+        }
+        break;
+      case 'sinking':
+        t.popProgress -= dt * 3;
+        if (t.popProgress <= 0) {
+          hole.tanuki = null;
+        }
+        break;
+    }
+
+    // Hit animation sink
+    if (t.hit) {
+      t.phase = 'sinking';
+      t.popProgress -= dt * 5;
+      if (t.popProgress <= 0) {
+        hole.tanuki = null;
+      }
+    }
+  }
+
+  // Update hole animations
+  for (const hole of holes) {
+    if (hole.hitAnim > 0) hole.hitAnim -= dt * 3;
+    if (hole.missAnim > 0) hole.missAnim -= dt * 3;
+  }
+
+  // Shake decay
+  if (shakeAmount > 0) shakeAmount *= 0.9;
+  if (shakeAmount < 0.1) shakeAmount = 0;
+
+  // Level up animation decay
+  if (levelUpAnim > 0) levelUpAnim -= dt;
+}
+
+function handleHit(x, y) {
+  if (state !== State.PLAYING) return;
+
+  let hitSomething = false;
+
+  for (const hole of holes) {
+    if (!hole.tanuki || hole.tanuki.hit) continue;
+    if (hole.tanuki.phase === 'sinking' && hole.tanuki.popProgress < 0.3) continue;
+
+    const dx = x - hole.x;
+    const dy = y - (hole.y - tanukiSize * 0.5 * hole.tanuki.popProgress);
+    const hitDist = holeRadius * 1.2;
+
+    if (dx * dx + dy * dy < hitDist * hitDist) {
+      const t = hole.tanuki;
+      t.hit = true;
+      hitSomething = true;
+
+      if (t.type === TANUKI_TYPES.BOMB) {
+        // Hit a bomb! Penalty!
+        const penalty = 30;
+        score = Math.max(0, score - penalty);
+        combo = 0;
+        shakeAmount = 15;
+
+        spawnParticles(hole.x, hole.y - tanukiSize, 25, '#ff3333', 8);
+        spawnParticles(hole.x, hole.y - tanukiSize, 15, '#333', 6);
+        hole.missAnim = 1;
+
+        const comment = bombHitComments[Math.floor(Math.random() * bombHitComments.length)];
+        showFloatingText(hole.x - 60, hole.y - tanukiSize * 2, `-${penalty}点！`, 'miss-text');
+        showFloatingText(hole.x - 80, hole.y - tanukiSize * 2.8, comment, 'miss-text');
+      } else {
+        // Score based on type
+        let points;
+        switch (t.type) {
+          case TANUKI_TYPES.GOLDEN: points = 50; break;
+          case TANUKI_TYPES.BOSS: points = 100; break;
+          case TANUKI_TYPES.SPEEDY: points = 20; break;
+          default: points = 10;
+        }
+
+        // Combo bonus
+        combo++;
+        if (combo > maxCombo) maxCombo = combo;
+        hitCount++;
+
+        const comboMultiplier = 1 + Math.floor(combo / 5) * 0.5;
+        points = Math.round(points * comboMultiplier);
+        score += points;
+
+        // Effects
+        hole.hitAnim = 1;
+        shakeAmount = 5;
+
+        const particleColor = t.type === TANUKI_TYPES.GOLDEN ? '#FFD700' :
+                              t.type === TANUKI_TYPES.BOSS ? '#ff6600' : '#8B6914';
+        spawnParticles(hole.x, hole.y - tanukiSize, 15, particleColor, 6);
+
+        if (t.type === TANUKI_TYPES.GOLDEN || t.type === TANUKI_TYPES.BOSS) {
+          spawnStars(hole.x, hole.y - tanukiSize, 10);
+        }
+
+        // Floating text
+        const comment = hitComments[Math.floor(Math.random() * hitComments.length)];
+        showFloatingText(hole.x - 30, hole.y - tanukiSize * 2, `+${points}`, 'hit-text');
+
+        if (t.type === TANUKI_TYPES.GOLDEN) {
+          showFloatingText(hole.x - 50, hole.y - tanukiSize * 2.8, '金たぬき！', 'bonus-text');
+        } else if (t.type === TANUKI_TYPES.BOSS) {
+          showFloatingText(hole.x - 60, hole.y - tanukiSize * 2.8, 'ボスたぬき！', 'bonus-text');
+        }
+
+        // Combo comments
+        if (comboComments[combo]) {
+          showFloatingText(canvas.width / 2 - 100, canvas.height * 0.12, comboComments[combo], 'combo-text');
+        }
+
+        updateComboDisplay();
+      }
+
+      document.getElementById('score-display').textContent = `${score} 点`;
+      break; // Only hit one tanuki per click
+    }
+  }
+
+  if (!hitSomething) {
+    // Clicked empty space - small penalty for wild clicks
+    // Don't penalize, just show a miss
+  }
+}
+
+function updateComboDisplay() {
+  const el = document.getElementById('combo-display');
+  if (combo >= 2) {
+    el.textContent = `${combo} COMBO!`;
+    el.style.transform = 'scale(1.2)';
+    setTimeout(() => { el.style.transform = 'scale(1)'; }, 100);
+  } else {
+    el.textContent = '';
+  }
+}
+
+function showResult() {
+  state = State.RESULT;
+
+  if (score > bestScore) {
+    bestScore = score;
+    localStorage.setItem('tanuki_whack_best', bestScore.toString());
+  }
+
+  // Determine rating
+  let rating, comments;
+  if (score >= 800) {
+    rating = '伝説のたぬき叩き師';
+    comments = resultComments.legendary;
+  } else if (score >= 500) {
+    rating = 'たぬきマスター';
+    comments = resultComments.great;
+  } else if (score >= 300) {
+    rating = '一人前のたぬき叩き';
+    comments = resultComments.good;
+  } else if (score >= 100) {
+    rating = 'たぬき叩き見習い';
+    comments = resultComments.normal;
+  } else {
+    rating = 'たぬきの友達';
+    comments = resultComments.bad;
+  }
+
+  const comment = comments[Math.floor(Math.random() * comments.length)];
+  const accuracy = totalSpawned > 0 ? Math.round(hitCount / totalSpawned * 100) : 0;
+
+  document.getElementById('message-title').textContent = rating;
+  document.getElementById('message-sub').innerHTML =
+    `スコア: ${score} 点<br>` +
+    `最大コンボ: ${maxCombo}<br>` +
+    `命中率: ${accuracy}%<br>` +
+    `<span style="color:#FFD700;font-size:0.8em">ベスト: ${bestScore} 点</span>`;
+  document.getElementById('message-comment').textContent = comment;
+  document.getElementById('message-action').textContent = 'タップ / クリック でもう一度';
+  document.getElementById('message-overlay').classList.remove('hidden');
+
+  // Celebration particles
+  for (let i = 0; i < 5; i++) {
+    setTimeout(() => {
+      const px = Math.random() * canvas.width;
+      const py = canvas.height * 0.3 + Math.random() * canvas.height * 0.3;
+      spawnStars(px, py, 8);
+      spawnParticles(px, py, 10, ['#FFD700', '#ff6600', '#ff3399', '#33ccff'][i % 4], 5);
+    }, i * 300);
+  }
+}
+
+// ===== Input =====
+function getInputPos(e) {
+  if (e.touches) {
+    return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+  }
+  return { x: e.clientX, y: e.clientY };
+}
+
+canvas.addEventListener('click', (e) => {
+  if (state === State.PLAYING) {
+    handleHit(e.clientX, e.clientY);
+  }
+});
+
+canvas.addEventListener('touchstart', (e) => {
+  e.preventDefault();
+  if (state === State.PLAYING) {
+    for (const touch of e.changedTouches) {
+      handleHit(touch.clientX, touch.clientY);
+    }
+  }
+}, { passive: false });
+
+document.getElementById('message-overlay').addEventListener('click', () => {
+  if (state === State.TITLE || state === State.RESULT) {
+    startGame();
+  }
+});
+
+document.getElementById('message-overlay').addEventListener('touchstart', (e) => {
+  e.preventDefault();
+  if (state === State.TITLE || state === State.RESULT) {
+    startGame();
+  }
+}, { passive: false });
+
+// ===== Main Loop =====
+let lastTime = 0;
+
+function loop(timestamp) {
+  const dt = Math.min((timestamp - lastTime) / 1000, 0.05);
+  lastTime = timestamp;
+
+  updateGame(dt);
+  updateParticles(dt);
+
+  // Apply screen shake
+  ctx.save();
+  if (shakeAmount > 0) {
+    ctx.translate(
+      (Math.random() - 0.5) * shakeAmount,
+      (Math.random() - 0.5) * shakeAmount
+    );
+  }
+
+  // Draw everything
+  drawBackground();
+
+  // Draw holes back-to-front (top to bottom for proper layering)
+  const sortedHoles = [...holes].sort((a, b) => a.y - b.y);
+
+  for (const hole of sortedHoles) {
+    drawHole(hole);
+
+    // Draw tanuki if present
+    if (hole.tanuki && hole.tanuki.popProgress > 0) {
+      drawTanuki(
+        hole.x, hole.y,
+        tanukiSize,
+        hole.tanuki.type,
+        hole.tanuki.popProgress,
+        hole.tanuki.wobbleTime
+      );
+    }
+
+    drawHoleFront(hole);
+  }
+
+  drawParticles();
+
+  // Level up flash
+  if (levelUpAnim > 0) {
+    ctx.globalAlpha = levelUpAnim * 0.15;
+    ctx.fillStyle = '#FFD700';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.globalAlpha = 1;
+  }
+
+  ctx.restore();
+
+  requestAnimationFrame(loop);
+}
+
+// ===== Title Screen Animation =====
+function animateTitle(timestamp) {
+  if (state !== State.TITLE) return;
+
+  const dt = Math.min((timestamp - lastTime) / 1000, 0.05);
+  lastTime = timestamp;
+
+  // Randomly pop tanuki for decoration
+  if (Math.random() < 0.02) {
+    const available = holes.filter(h => h.tanuki === null);
+    if (available.length > 0) {
+      const hole = available[Math.floor(Math.random() * available.length)];
+      const types = [TANUKI_TYPES.NORMAL, TANUKI_TYPES.GOLDEN, TANUKI_TYPES.NORMAL, TANUKI_TYPES.NORMAL];
+      hole.tanuki = {
+        type: types[Math.floor(Math.random() * types.length)],
+        popProgress: 0,
+        phase: 'rising',
+        stayDuration: 1.5 + Math.random(),
+        stayTimer: 0,
+        wobbleTime: Math.random() * 100,
+        hit: false,
+      };
+    }
+  }
+
+  // Update demo tanuki
+  for (const hole of holes) {
+    if (!hole.tanuki) continue;
+    const t = hole.tanuki;
+    t.wobbleTime += dt;
+
+    switch (t.phase) {
+      case 'rising':
+        t.popProgress += dt * 3;
+        if (t.popProgress >= 1) { t.popProgress = 1; t.phase = 'showing'; }
+        break;
+      case 'showing':
+        t.stayTimer += dt;
+        if (t.stayTimer >= t.stayDuration) t.phase = 'sinking';
+        break;
+      case 'sinking':
+        t.popProgress -= dt * 2;
+        if (t.popProgress <= 0) hole.tanuki = null;
+        break;
+    }
+  }
+
+  updateParticles(dt);
+
+  drawBackground();
+
+  const sortedHoles = [...holes].sort((a, b) => a.y - b.y);
+  for (const hole of sortedHoles) {
+    drawHole(hole);
+    if (hole.tanuki && hole.tanuki.popProgress > 0) {
+      drawTanuki(hole.x, hole.y, tanukiSize, hole.tanuki.type, hole.tanuki.popProgress, hole.tanuki.wobbleTime);
+    }
+    drawHoleFront(hole);
+  }
+
+  drawParticles();
+
+  requestAnimationFrame(state === State.TITLE ? animateTitle : loop);
+}
+
+// ===== Init =====
+function init() {
+  // Show best score on title
+  if (bestScore > 0) {
+    document.getElementById('message-sub').innerHTML =
+      `穴から出てくるたぬきを叩け！<br>ただしニセモノに注意...<br>` +
+      `<span style="color:#FFD700;font-size:0.8em">ベスト: ${bestScore} 点</span>`;
+  }
+
+  requestAnimationFrame(animateTitle);
+}
+
+init();
+</script>
+</body>
+</html>
