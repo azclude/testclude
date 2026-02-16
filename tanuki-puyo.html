@@ -1,0 +1,1263 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>たぬぷよ - たぬきのぷよぷよ</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: #1a0a2e;
+  font-family: 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif;
+  overflow: hidden;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#gameContainer {
+  position: relative;
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+}
+
+#sidebar-left {
+  width: 160px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-top: 20px;
+}
+
+#sidebar-right {
+  width: 160px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-top: 20px;
+}
+
+.panel {
+  background: rgba(255,255,255,0.08);
+  border: 2px solid rgba(255,255,255,0.15);
+  border-radius: 12px;
+  padding: 12px;
+  color: #fff;
+  text-align: center;
+}
+
+.panel-title {
+  font-size: 11px;
+  color: #aaa;
+  margin-bottom: 6px;
+  letter-spacing: 2px;
+}
+
+.panel-value {
+  font-size: 24px;
+  font-weight: bold;
+  color: #ffd700;
+}
+
+.panel-chain {
+  font-size: 32px;
+  font-weight: bold;
+  color: #ff6b6b;
+}
+
+#nextCanvas {
+  display: block;
+  margin: 0 auto;
+}
+
+#mainCanvas {
+  border: 3px solid rgba(255,255,255,0.2);
+  border-radius: 8px;
+  display: block;
+  background: rgba(0,0,0,0.3);
+}
+
+.title-area {
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.game-title {
+  font-size: 28px;
+  font-weight: 900;
+  background: linear-gradient(135deg, #ffd700, #ff8c00, #ff6b6b);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: none;
+  letter-spacing: 4px;
+}
+
+.game-subtitle {
+  font-size: 11px;
+  color: #888;
+  letter-spacing: 2px;
+}
+
+.char-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+}
+
+.char-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #ccc;
+}
+
+.char-dot {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.3);
+}
+
+#controls-info {
+  font-size: 11px;
+  color: #777;
+  line-height: 1.8;
+}
+
+/* Overlay screens */
+.overlay {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.75);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 100;
+  border-radius: 8px;
+}
+
+.overlay h2 {
+  font-size: 36px;
+  color: #ffd700;
+  margin-bottom: 16px;
+  text-shadow: 0 0 20px rgba(255,215,0,0.5);
+}
+
+.overlay p {
+  color: #ccc;
+  font-size: 14px;
+  margin-bottom: 24px;
+}
+
+.overlay button {
+  background: linear-gradient(135deg, #ffd700, #ff8c00);
+  border: none;
+  padding: 14px 40px;
+  font-size: 18px;
+  font-weight: bold;
+  border-radius: 30px;
+  cursor: pointer;
+  color: #1a0a2e;
+  transition: transform 0.15s;
+}
+
+.overlay button:hover {
+  transform: scale(1.05);
+}
+
+/* Chain popup */
+#chainPopup {
+  position: absolute;
+  pointer-events: none;
+  font-size: 48px;
+  font-weight: 900;
+  color: #ff6b6b;
+  text-shadow: 0 0 20px rgba(255,107,107,0.8), 0 2px 4px rgba(0,0,0,0.5);
+  opacity: 0;
+  transition: all 0.3s ease-out;
+  z-index: 50;
+  white-space: nowrap;
+}
+
+/* Responsive */
+@media (max-width: 700px) {
+  #sidebar-left, #sidebar-right { display: none; }
+  body { align-items: flex-start; padding-top: 10px; }
+}
+</style>
+</head>
+<body>
+
+<div id="gameContainer">
+  <div id="sidebar-left">
+    <div class="title-area">
+      <div class="game-title">たぬぷよ</div>
+      <div class="game-subtitle">TANUKI PUYO</div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">SCORE</div>
+      <div class="panel-value" id="scoreDisplay">0</div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">CHAIN</div>
+      <div class="panel-chain" id="chainDisplay">-</div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">LEVEL</div>
+      <div class="panel-value" id="levelDisplay" style="font-size:20px;">1</div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">MAX CHAIN</div>
+      <div class="panel-value" id="maxChainDisplay" style="font-size:20px;">0</div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">NEXT</div>
+      <canvas id="nextCanvas" width="60" height="100"></canvas>
+    </div>
+  </div>
+
+  <div style="position:relative;">
+    <canvas id="mainCanvas"></canvas>
+    <div id="chainPopup"></div>
+
+    <div class="overlay" id="startScreen">
+      <h2>たぬぷよ</h2>
+      <p>たぬきの落ちモノパズル！<br>同じ子分を4つくっつけて消そう！</p>
+      <button id="startBtn">はじめる</button>
+    </div>
+
+    <div class="overlay" id="gameOverScreen" style="display:none;">
+      <h2>GAME OVER</h2>
+      <p id="finalScoreText">スコア: 0</p>
+      <button id="retryBtn">もう一回！</button>
+    </div>
+  </div>
+
+  <div id="sidebar-right">
+    <div class="panel">
+      <div class="panel-title">なかまたち</div>
+      <div class="char-legend" id="charLegend"></div>
+    </div>
+    <div class="panel" id="controls-info">
+      <div class="panel-title">あそびかた</div>
+      ← → : いどう<br>
+      ↑ / Z : まわす<br>
+      ↓ : はやく落とす<br>
+      Space : いっきに落とす
+    </div>
+  </div>
+</div>
+
+<script>
+// === Game Constants ===
+const COLS = 6;
+const ROWS = 13; // row 0 is hidden
+const VISIBLE_ROWS = 12;
+const CELL = 40;
+const CONNECT_MIN = 4;
+
+const CANVAS_W = COLS * CELL;
+const CANVAS_H = VISIBLE_ROWS * CELL;
+
+// Character definitions
+const CHARS = [
+  { name: 'ぽんぽー', color: '#8B6914', bgColor: '#D4A843', face: 'ponpo', desc: '主人公たぬき' },
+  { name: 'くまさん', color: '#5C3317', bgColor: '#A0522D', face: 'kuma', desc: 'くまの子分' },
+  { name: 'ごりらさん', color: '#2F4F4F', bgColor: '#708090', face: 'gorira', desc: 'ごりらの子分' },
+  { name: 'まんぐーす', color: '#8B7355', bgColor: '#D2B48C', face: 'mongoose', desc: 'まんぐーすの子分' }
+];
+
+// === Canvas Setup ===
+const canvas = document.getElementById('mainCanvas');
+const ctx = canvas.getContext('2d');
+canvas.width = CANVAS_W;
+canvas.height = CANVAS_H;
+
+const nextCanvas = document.getElementById('nextCanvas');
+const nextCtx = nextCanvas.getContext('2d');
+
+// === Game State ===
+let board = [];       // board[row][col] = charIndex or -1
+let score = 0;
+let chain = 0;
+let maxChain = 0;
+let gameOver = false;
+let gameStarted = false;
+let dropping = false;
+
+// Current piece (pair of 2)
+let current = null;   // { pivot: {r,c,type}, child: {r,c,type}, rotation: 0..3 }
+let nextPiece = null;
+
+// Timers
+let dropTimer = 0;
+let dropInterval = 700; // ms
+let lastTime = 0;
+let lockDelay = 0;
+let animating = false;
+let locked = false; // is piece touching ground
+
+// Particles
+let particles = [];
+
+// Audio
+let audioCtx = null;
+function initAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+}
+function playSound(freq, duration, type) {
+  if (!audioCtx) return;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = type || 'sine';
+  osc.frequency.value = freq;
+  gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.start();
+  osc.stop(audioCtx.currentTime + duration);
+}
+function playPopSound(chainNum) {
+  const baseFreq = 400 + chainNum * 100;
+  playSound(baseFreq, 0.15, 'square');
+  setTimeout(() => playSound(baseFreq * 1.5, 0.1, 'sine'), 50);
+}
+function playDropSound() {
+  playSound(150, 0.1, 'triangle');
+}
+function playMoveSound() {
+  playSound(300, 0.05, 'sine');
+}
+
+// Touch controls
+let touchStartX = 0;
+let touchStartY = 0;
+
+// === Board Init ===
+function initBoard() {
+  board = [];
+  for (let r = 0; r < ROWS; r++) {
+    board[r] = [];
+    for (let c = 0; c < COLS; c++) {
+      board[r][c] = -1;
+    }
+  }
+}
+
+// === Piece Generation ===
+function randomType() {
+  return Math.floor(Math.random() * CHARS.length);
+}
+
+function createPiece() {
+  return {
+    pivot: { r: 0, c: 2, type: randomType() },
+    child: { r: -1, c: 2, type: randomType() }, // child starts above pivot (rotation 0 = child on top)
+    rotation: 0
+  };
+}
+
+function spawnPiece() {
+  if (nextPiece === null) {
+    nextPiece = createPiece();
+  }
+  current = nextPiece;
+  current.pivot.r = 1;
+  current.pivot.c = 2;
+  current.rotation = 0;
+  updateChildPos();
+  nextPiece = createPiece();
+
+  // Check game over
+  if (board[current.pivot.r][current.pivot.c] !== -1 ||
+      (current.child.r >= 0 && current.child.r < ROWS && board[current.child.r][current.child.c] !== -1)) {
+    gameOver = true;
+    showGameOver();
+    return;
+  }
+
+  dropTimer = 0;
+  lockDelay = 0;
+  locked = false;
+  piecesPlaced++;
+  level = Math.floor(piecesPlaced / 10) + 1;
+  dropInterval = getDropInterval();
+}
+
+function updateChildPos() {
+  const p = current.pivot;
+  const offsets = [
+    { r: -1, c: 0 },  // 0: top
+    { r: 0, c: 1 },   // 1: right
+    { r: 1, c: 0 },   // 2: bottom
+    { r: 0, c: -1 }   // 3: left
+  ];
+  const off = offsets[current.rotation];
+  current.child.r = p.r + off.r;
+  current.child.c = p.c + off.c;
+}
+
+// === Collision ===
+function isValid(r, c) {
+  return r >= -1 && r < ROWS && c >= 0 && c < COLS;
+}
+
+function isFree(r, c) {
+  if (c < 0 || c >= COLS) return false;
+  if (r >= ROWS) return false;
+  if (r < 0) return true; // above board is ok
+  return board[r][c] === -1;
+}
+
+function canMove(dr, dc) {
+  const pr = current.pivot.r + dr;
+  const pc = current.pivot.c + dc;
+  const cr = current.child.r + dr;
+  const cc = current.child.c + dc;
+  return isFree(pr, pc) && isFree(cr, cc);
+}
+
+// === Movement ===
+function moveLeft() {
+  if (!current || animating) return;
+  if (canMove(0, -1)) {
+    current.pivot.c--;
+    updateChildPos();
+    playMoveSound();
+  }
+}
+
+function moveRight() {
+  if (!current || animating) return;
+  if (canMove(0, 1)) {
+    current.pivot.c++;
+    updateChildPos();
+    playMoveSound();
+  }
+}
+
+function rotate() {
+  if (!current || animating) return;
+  const oldRot = current.rotation;
+  const newRot = (current.rotation + 1) % 4;
+  current.rotation = newRot;
+  updateChildPos();
+
+  if (!isFree(current.child.r, current.child.c)) {
+    // Try kick
+    const kicks = [
+      { r: 0, c: -1 }, { r: 0, c: 1 }, { r: -1, c: 0 }
+    ];
+    let kicked = false;
+    for (const k of kicks) {
+      const nr = current.pivot.r + k.r;
+      const nc = current.pivot.c + k.c;
+      current.pivot.r = nr;
+      current.pivot.c = nc;
+      updateChildPos();
+      if (isFree(current.pivot.r, current.pivot.c) && isFree(current.child.r, current.child.c)) {
+        kicked = true;
+        break;
+      }
+      current.pivot.r = nr - k.r;
+      current.pivot.c = nc - k.c;
+    }
+    if (!kicked) {
+      current.rotation = oldRot;
+      updateChildPos();
+    }
+  }
+}
+
+function softDrop() {
+  if (!current || animating) return;
+  if (canMove(1, 0)) {
+    current.pivot.r++;
+    updateChildPos();
+    score += 1;
+    dropTimer = 0;
+  }
+}
+
+function hardDrop() {
+  if (!current || animating) return;
+  while (canMove(1, 0)) {
+    current.pivot.r++;
+    updateChildPos();
+    score += 2;
+  }
+  lockPiece();
+}
+
+// === Lock & Chain ===
+function lockPiece() {
+  if (!current) return;
+  const p = current.pivot;
+  const ch = current.child;
+
+  // Place pieces - need to handle gravity for each piece independently
+  // First, drop pivot and child to their resting positions
+  const pieces = [];
+
+  if (p.r >= 0 && p.r < ROWS) {
+    board[p.r][p.c] = p.type;
+  }
+  if (ch.r >= 0 && ch.r < ROWS) {
+    board[ch.r][ch.c] = ch.type;
+  }
+
+  current = null;
+  dropping = true;
+  chain = 0;
+  playDropSound();
+
+  // Start chain resolution
+  setTimeout(() => resolveChains(), 100);
+}
+
+function applyGravity() {
+  let moved = false;
+  for (let c = 0; c < COLS; c++) {
+    for (let r = ROWS - 2; r >= 0; r--) {
+      if (board[r][c] !== -1 && board[r + 1][c] === -1) {
+        // Find lowest empty
+        let nr = r + 1;
+        while (nr + 1 < ROWS && board[nr + 1][c] === -1) nr++;
+        board[nr][c] = board[r][c];
+        board[r][c] = -1;
+        moved = true;
+      }
+    }
+  }
+  return moved;
+}
+
+function findConnected(r, c, type, visited) {
+  if (r < 0 || r >= ROWS || c < 0 || c >= COLS) return [];
+  if (visited[r][c]) return [];
+  if (board[r][c] !== type) return [];
+  visited[r][c] = true;
+  let cells = [{ r, c }];
+  cells = cells.concat(findConnected(r - 1, c, type, visited));
+  cells = cells.concat(findConnected(r + 1, c, type, visited));
+  cells = cells.concat(findConnected(r, c - 1, type, visited));
+  cells = cells.concat(findConnected(r, c + 1, type, visited));
+  return cells;
+}
+
+function resolveChains() {
+  applyGravity();
+
+  let visited = Array.from({ length: ROWS }, () => Array(COLS).fill(false));
+  let toRemove = [];
+
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      if (board[r][c] !== -1 && !visited[r][c]) {
+        const group = findConnected(r, c, board[r][c], visited);
+        if (group.length >= CONNECT_MIN) {
+          toRemove.push(...group);
+        }
+      }
+    }
+  }
+
+  if (toRemove.length > 0) {
+    chain++;
+    if (chain > maxChain) maxChain = chain;
+
+    // Score: base * chain_multiplier * group_bonus
+    const baseScore = toRemove.length * 10;
+    const chainMult = Math.pow(2, chain - 1);
+    score += baseScore * chainMult;
+
+    // Spawn particles
+    for (const cell of toRemove) {
+      const type = board[cell.r][cell.c];
+      spawnParticles(cell.c * CELL + CELL / 2, (cell.r - 1) * CELL + CELL / 2, CHARS[type].bgColor);
+      board[cell.r][cell.c] = -1;
+    }
+
+    playPopSound(chain);
+
+    // Show chain popup
+    if (chain >= 2) {
+      showChainPopup(chain);
+    }
+
+    updateUI();
+
+    // Continue resolving after a delay
+    setTimeout(() => resolveChains(), 350);
+  } else {
+    chain = 0;
+    dropping = false;
+
+    // Check if top rows are blocked (game over)
+    let topBlocked = false;
+    for (let c = 0; c < COLS; c++) {
+      if (board[0][c] !== -1 || board[1][c] !== -1) {
+        topBlocked = true;
+        break;
+      }
+    }
+    if (topBlocked) {
+      gameOver = true;
+      showGameOver();
+      return;
+    }
+
+    spawnPiece();
+    updateUI();
+  }
+}
+
+// === Particles ===
+function spawnParticles(x, y, color) {
+  for (let i = 0; i < 8; i++) {
+    particles.push({
+      x, y,
+      vx: (Math.random() - 0.5) * 6,
+      vy: (Math.random() - 0.5) * 6 - 2,
+      life: 1,
+      color,
+      size: Math.random() * 4 + 2
+    });
+  }
+}
+
+function updateParticles(dt) {
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    p.x += p.vx;
+    p.y += p.vy;
+    p.vy += 0.15;
+    p.life -= dt * 2;
+    if (p.life <= 0) particles.splice(i, 1);
+  }
+}
+
+function drawParticles() {
+  for (const p of particles) {
+    ctx.globalAlpha = p.life;
+    ctx.fillStyle = p.color;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+
+// === Chain Popup ===
+function showChainPopup(n) {
+  const popup = document.getElementById('chainPopup');
+  popup.textContent = `${n}れんさ！`;
+  popup.style.opacity = 1;
+  popup.style.left = '50%';
+  popup.style.top = '40%';
+  popup.style.transform = 'translate(-50%,-50%) scale(1.2)';
+  setTimeout(() => {
+    popup.style.opacity = 0;
+    popup.style.transform = 'translate(-50%,-50%) scale(0.5)';
+  }, 600);
+}
+
+// === Drawing ===
+function drawCharacter(context, x, y, size, charIndex, isGhost) {
+  const ch = CHARS[charIndex];
+  const r = size / 2 - 2;
+  const cx = x + size / 2;
+  const cy = y + size / 2;
+
+  context.save();
+
+  if (isGhost) {
+    context.globalAlpha = 0.25;
+  }
+
+  // Body circle with gradient
+  const grad = context.createRadialGradient(cx - r * 0.2, cy - r * 0.2, r * 0.1, cx, cy, r);
+  grad.addColorStop(0, lightenColor(ch.bgColor, 40));
+  grad.addColorStop(1, ch.bgColor);
+  context.fillStyle = grad;
+  context.beginPath();
+  context.arc(cx, cy, r, 0, Math.PI * 2);
+  context.fill();
+
+  // Border
+  context.strokeStyle = ch.color;
+  context.lineWidth = 2;
+  context.stroke();
+
+  // Draw face based on character
+  context.fillStyle = '#333';
+  const eyeY = cy - r * 0.15;
+  const eyeSpacing = r * 0.3;
+
+  if (ch.face === 'ponpo') {
+    // Tanuki - round eyes, leaf on head, cute smile
+    // Eyes
+    context.fillStyle = '#111';
+    context.beginPath();
+    context.ellipse(cx - eyeSpacing, eyeY, r * 0.13, r * 0.16, 0, 0, Math.PI * 2);
+    context.fill();
+    context.beginPath();
+    context.ellipse(cx + eyeSpacing, eyeY, r * 0.13, r * 0.16, 0, 0, Math.PI * 2);
+    context.fill();
+
+    // Eye shine
+    context.fillStyle = '#fff';
+    context.beginPath();
+    context.arc(cx - eyeSpacing + 2, eyeY - 2, r * 0.05, 0, Math.PI * 2);
+    context.fill();
+    context.beginPath();
+    context.arc(cx + eyeSpacing + 2, eyeY - 2, r * 0.05, 0, Math.PI * 2);
+    context.fill();
+
+    // Dark patches around eyes (tanuki markings)
+    context.fillStyle = 'rgba(60,30,0,0.3)';
+    context.beginPath();
+    context.ellipse(cx - eyeSpacing, eyeY, r * 0.22, r * 0.24, 0, 0, Math.PI * 2);
+    context.fill();
+    context.beginPath();
+    context.ellipse(cx + eyeSpacing, eyeY, r * 0.22, r * 0.24, 0, 0, Math.PI * 2);
+    context.fill();
+
+    // Re-draw eyes on top of patches
+    context.fillStyle = '#111';
+    context.beginPath();
+    context.ellipse(cx - eyeSpacing, eyeY, r * 0.12, r * 0.15, 0, 0, Math.PI * 2);
+    context.fill();
+    context.beginPath();
+    context.ellipse(cx + eyeSpacing, eyeY, r * 0.12, r * 0.15, 0, 0, Math.PI * 2);
+    context.fill();
+
+    context.fillStyle = '#fff';
+    context.beginPath();
+    context.arc(cx - eyeSpacing + 1.5, eyeY - 2, r * 0.05, 0, Math.PI * 2);
+    context.fill();
+    context.beginPath();
+    context.arc(cx + eyeSpacing + 1.5, eyeY - 2, r * 0.05, 0, Math.PI * 2);
+    context.fill();
+
+    // Nose
+    context.fillStyle = '#333';
+    context.beginPath();
+    context.ellipse(cx, cy + r * 0.1, r * 0.08, r * 0.06, 0, 0, Math.PI * 2);
+    context.fill();
+
+    // Smile
+    context.strokeStyle = '#333';
+    context.lineWidth = 1.5;
+    context.beginPath();
+    context.arc(cx, cy + r * 0.05, r * 0.2, 0.2, Math.PI - 0.2);
+    context.stroke();
+
+    // Leaf on head
+    context.fillStyle = '#4CAF50';
+    context.beginPath();
+    context.ellipse(cx + r * 0.1, cy - r * 0.85, r * 0.25, r * 0.12, -0.3, 0, Math.PI * 2);
+    context.fill();
+    context.strokeStyle = '#2E7D32';
+    context.lineWidth = 1;
+    context.stroke();
+
+    // Ears
+    context.fillStyle = ch.bgColor;
+    context.beginPath();
+    context.ellipse(cx - r * 0.65, cy - r * 0.7, r * 0.18, r * 0.22, -0.3, 0, Math.PI * 2);
+    context.fill();
+    context.strokeStyle = ch.color;
+    context.lineWidth = 1.5;
+    context.stroke();
+    context.beginPath();
+    context.ellipse(cx + r * 0.65, cy - r * 0.7, r * 0.18, r * 0.22, 0.3, 0, Math.PI * 2);
+    context.fill();
+    context.stroke();
+
+  } else if (ch.face === 'kuma') {
+    // Bear - round ears, dot eyes, line mouth
+    // Ears
+    context.fillStyle = ch.bgColor;
+    context.beginPath();
+    context.arc(cx - r * 0.6, cy - r * 0.65, r * 0.25, 0, Math.PI * 2);
+    context.fill();
+    context.strokeStyle = ch.color;
+    context.lineWidth = 1.5;
+    context.stroke();
+    context.fillStyle = '#D2691E';
+    context.beginPath();
+    context.arc(cx - r * 0.6, cy - r * 0.65, r * 0.13, 0, Math.PI * 2);
+    context.fill();
+
+    context.fillStyle = ch.bgColor;
+    context.beginPath();
+    context.arc(cx + r * 0.6, cy - r * 0.65, r * 0.25, 0, Math.PI * 2);
+    context.fill();
+    context.strokeStyle = ch.color;
+    context.lineWidth = 1.5;
+    context.stroke();
+    context.fillStyle = '#D2691E';
+    context.beginPath();
+    context.arc(cx + r * 0.6, cy - r * 0.65, r * 0.13, 0, Math.PI * 2);
+    context.fill();
+
+    // Eyes (cute dot eyes)
+    context.fillStyle = '#111';
+    context.beginPath();
+    context.arc(cx - eyeSpacing, eyeY, r * 0.1, 0, Math.PI * 2);
+    context.fill();
+    context.beginPath();
+    context.arc(cx + eyeSpacing, eyeY, r * 0.1, 0, Math.PI * 2);
+    context.fill();
+
+    // Eye shine
+    context.fillStyle = '#fff';
+    context.beginPath();
+    context.arc(cx - eyeSpacing + 1.5, eyeY - 1.5, r * 0.04, 0, Math.PI * 2);
+    context.fill();
+    context.beginPath();
+    context.arc(cx + eyeSpacing + 1.5, eyeY - 1.5, r * 0.04, 0, Math.PI * 2);
+    context.fill();
+
+    // Snout
+    context.fillStyle = '#DEB887';
+    context.beginPath();
+    context.ellipse(cx, cy + r * 0.15, r * 0.22, r * 0.16, 0, 0, Math.PI * 2);
+    context.fill();
+
+    // Nose
+    context.fillStyle = '#333';
+    context.beginPath();
+    context.ellipse(cx, cy + r * 0.08, r * 0.08, r * 0.06, 0, 0, Math.PI * 2);
+    context.fill();
+
+    // Mouth
+    context.strokeStyle = '#333';
+    context.lineWidth = 1.2;
+    context.beginPath();
+    context.moveTo(cx, cy + r * 0.14);
+    context.lineTo(cx - r * 0.1, cy + r * 0.25);
+    context.stroke();
+    context.beginPath();
+    context.moveTo(cx, cy + r * 0.14);
+    context.lineTo(cx + r * 0.1, cy + r * 0.25);
+    context.stroke();
+
+  } else if (ch.face === 'gorira') {
+    // Gorilla - strong brow, wide nostrils
+    // Brow ridge
+    context.fillStyle = 'rgba(0,0,0,0.2)';
+    context.beginPath();
+    context.ellipse(cx, eyeY - r * 0.15, r * 0.55, r * 0.12, 0, 0, Math.PI * 2);
+    context.fill();
+
+    // Eyes (smaller, intense)
+    context.fillStyle = '#111';
+    context.beginPath();
+    context.ellipse(cx - eyeSpacing, eyeY, r * 0.09, r * 0.11, 0, 0, Math.PI * 2);
+    context.fill();
+    context.beginPath();
+    context.ellipse(cx + eyeSpacing, eyeY, r * 0.09, r * 0.11, 0, 0, Math.PI * 2);
+    context.fill();
+
+    // Eye shine
+    context.fillStyle = '#fff';
+    context.beginPath();
+    context.arc(cx - eyeSpacing + 1, eyeY - 1.5, r * 0.035, 0, Math.PI * 2);
+    context.fill();
+    context.beginPath();
+    context.arc(cx + eyeSpacing + 1, eyeY - 1.5, r * 0.035, 0, Math.PI * 2);
+    context.fill();
+
+    // Nose/face area
+    context.fillStyle = '#5F6B6B';
+    context.beginPath();
+    context.ellipse(cx, cy + r * 0.2, r * 0.3, r * 0.25, 0, 0, Math.PI * 2);
+    context.fill();
+
+    // Nostrils
+    context.fillStyle = '#333';
+    context.beginPath();
+    context.ellipse(cx - r * 0.1, cy + r * 0.15, r * 0.06, r * 0.05, 0, 0, Math.PI * 2);
+    context.fill();
+    context.beginPath();
+    context.ellipse(cx + r * 0.1, cy + r * 0.15, r * 0.06, r * 0.05, 0, 0, Math.PI * 2);
+    context.fill();
+
+    // Mouth (determined)
+    context.strokeStyle = '#333';
+    context.lineWidth = 1.5;
+    context.beginPath();
+    context.arc(cx, cy + r * 0.15, r * 0.18, 0.3, Math.PI - 0.3);
+    context.stroke();
+
+  } else if (ch.face === 'mongoose') {
+    // Mongoose - pointed face, alert eyes, whiskers
+    // Pointed ears
+    context.fillStyle = ch.bgColor;
+    context.beginPath();
+    context.moveTo(cx - r * 0.5, cy - r * 0.4);
+    context.lineTo(cx - r * 0.7, cy - r * 0.95);
+    context.lineTo(cx - r * 0.25, cy - r * 0.6);
+    context.closePath();
+    context.fill();
+    context.strokeStyle = ch.color;
+    context.lineWidth = 1.5;
+    context.stroke();
+
+    context.beginPath();
+    context.moveTo(cx + r * 0.5, cy - r * 0.4);
+    context.lineTo(cx + r * 0.7, cy - r * 0.95);
+    context.lineTo(cx + r * 0.25, cy - r * 0.6);
+    context.closePath();
+    context.fill();
+    context.stroke();
+
+    // Inner ears
+    context.fillStyle = '#FFB6C1';
+    context.beginPath();
+    context.moveTo(cx - r * 0.45, cy - r * 0.45);
+    context.lineTo(cx - r * 0.6, cy - r * 0.8);
+    context.lineTo(cx - r * 0.3, cy - r * 0.55);
+    context.closePath();
+    context.fill();
+    context.beginPath();
+    context.moveTo(cx + r * 0.45, cy - r * 0.45);
+    context.lineTo(cx + r * 0.6, cy - r * 0.8);
+    context.lineTo(cx + r * 0.3, cy - r * 0.55);
+    context.closePath();
+    context.fill();
+
+    // Eyes (alert, larger)
+    context.fillStyle = '#111';
+    context.beginPath();
+    context.ellipse(cx - eyeSpacing, eyeY, r * 0.12, r * 0.14, 0, 0, Math.PI * 2);
+    context.fill();
+    context.beginPath();
+    context.ellipse(cx + eyeSpacing, eyeY, r * 0.12, r * 0.14, 0, 0, Math.PI * 2);
+    context.fill();
+
+    // Eye shine
+    context.fillStyle = '#fff';
+    context.beginPath();
+    context.arc(cx - eyeSpacing + 2, eyeY - 2, r * 0.05, 0, Math.PI * 2);
+    context.fill();
+    context.beginPath();
+    context.arc(cx + eyeSpacing + 2, eyeY - 2, r * 0.05, 0, Math.PI * 2);
+    context.fill();
+
+    // Nose
+    context.fillStyle = '#FF69B4';
+    context.beginPath();
+    context.ellipse(cx, cy + r * 0.05, r * 0.07, r * 0.05, 0, 0, Math.PI * 2);
+    context.fill();
+
+    // Whiskers
+    context.strokeStyle = '#666';
+    context.lineWidth = 0.8;
+    for (let side = -1; side <= 1; side += 2) {
+      for (let i = -1; i <= 1; i++) {
+        context.beginPath();
+        context.moveTo(cx + side * r * 0.15, cy + r * 0.1);
+        context.lineTo(cx + side * r * 0.55, cy + r * (0.05 + i * 0.08));
+        context.stroke();
+      }
+    }
+
+    // Mouth
+    context.strokeStyle = '#333';
+    context.lineWidth = 1;
+    context.beginPath();
+    context.arc(cx, cy + r * 0.08, r * 0.12, 0.2, Math.PI - 0.2);
+    context.stroke();
+  }
+
+  context.restore();
+}
+
+function lightenColor(hex, amount) {
+  const num = parseInt(hex.slice(1), 16);
+  let r = Math.min(255, (num >> 16) + amount);
+  let g = Math.min(255, ((num >> 8) & 0xFF) + amount);
+  let b = Math.min(255, (num & 0xFF) + amount);
+  return `rgb(${r},${g},${b})`;
+}
+
+// === Ghost Piece ===
+function getGhostPosition() {
+  if (!current) return null;
+  let dr = 0;
+  while (true) {
+    const pr = current.pivot.r + dr + 1;
+    const pc = current.pivot.c;
+    const cr = current.child.r + dr + 1;
+    const cc = current.child.c;
+    if (!isFree(pr, pc) || !isFree(cr, cc)) break;
+    dr++;
+  }
+  return {
+    pivot: { r: current.pivot.r + dr, c: current.pivot.c, type: current.pivot.type },
+    child: { r: current.child.r + dr, c: current.child.c, type: current.child.type }
+  };
+}
+
+// === Render ===
+function draw() {
+  ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
+
+  // Grid lines
+  ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+  ctx.lineWidth = 1;
+  for (let r = 0; r < VISIBLE_ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      ctx.strokeRect(c * CELL, r * CELL, CELL, CELL);
+    }
+  }
+
+  // Death zone indicator (row 0 in visible area = row 1 in board)
+  ctx.fillStyle = 'rgba(255,0,0,0.06)';
+  ctx.fillRect(0, 0, CANVAS_W, CELL);
+
+  // X marker at death column
+  ctx.fillStyle = 'rgba(255,100,100,0.2)';
+  ctx.font = 'bold 16px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('X', 2 * CELL + CELL / 2, CELL / 2);
+
+  // Board pieces (skip row 0 which is hidden)
+  for (let r = 1; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      if (board[r][c] !== -1) {
+        const drawR = r - 1; // offset for hidden row
+        drawCharacter(ctx, c * CELL, drawR * CELL, CELL, board[r][c], false);
+      }
+    }
+  }
+
+  // Ghost piece
+  if (current && !animating) {
+    const ghost = getGhostPosition();
+    if (ghost) {
+      if (ghost.pivot.r >= 1) {
+        drawCharacter(ctx, ghost.pivot.c * CELL, (ghost.pivot.r - 1) * CELL, CELL, ghost.pivot.type, true);
+      }
+      if (ghost.child.r >= 1) {
+        drawCharacter(ctx, ghost.child.c * CELL, (ghost.child.r - 1) * CELL, CELL, ghost.child.type, true);
+      }
+    }
+  }
+
+  // Current piece
+  if (current) {
+    const p = current.pivot;
+    const ch = current.child;
+    if (p.r >= 1) {
+      drawCharacter(ctx, p.c * CELL, (p.r - 1) * CELL, CELL, p.type, false);
+    }
+    if (ch.r >= 1) {
+      drawCharacter(ctx, ch.c * CELL, (ch.r - 1) * CELL, CELL, ch.type, false);
+    }
+  }
+
+  // Particles
+  drawParticles();
+
+  // Next piece preview
+  drawNext();
+}
+
+function drawNext() {
+  nextCtx.clearRect(0, 0, 60, 100);
+  if (!nextPiece) return;
+  const sz = 28;
+  const ox = (60 - sz) / 2;
+  drawCharacter(nextCtx, ox, 5, sz, nextPiece.child.type, false);
+  drawCharacter(nextCtx, ox, 5 + sz + 4, sz, nextPiece.pivot.type, false);
+}
+
+// === UI ===
+function updateUI() {
+  document.getElementById('scoreDisplay').textContent = score.toLocaleString();
+  document.getElementById('chainDisplay').textContent = chain > 0 ? chain : '-';
+  document.getElementById('maxChainDisplay').textContent = maxChain;
+  document.getElementById('levelDisplay').textContent = level;
+}
+
+function showGameOver() {
+  document.getElementById('finalScoreText').textContent = `スコア: ${score.toLocaleString()}  |  最大れんさ: ${maxChain}`;
+  document.getElementById('gameOverScreen').style.display = 'flex';
+}
+
+// === Game Loop ===
+function gameLoop(timestamp) {
+  if (!gameStarted || gameOver) {
+    draw();
+    requestAnimationFrame(gameLoop);
+    return;
+  }
+
+  const deltaMs = lastTime ? (timestamp - lastTime) : 0;
+  const dt = deltaMs / 1000;
+  lastTime = timestamp;
+
+  // Update particles
+  updateParticles(dt);
+
+  // Auto drop
+  if (current && !dropping) {
+    if (!canMove(1, 0)) {
+      // On ground - lock delay
+      lockDelay += deltaMs;
+      if (lockDelay >= 400) {
+        lockPiece();
+      }
+    } else {
+      lockDelay = 0;
+      dropTimer += deltaMs;
+      if (dropTimer >= dropInterval) {
+        current.pivot.r++;
+        updateChildPos();
+        dropTimer = 0;
+      }
+    }
+  }
+
+  draw();
+  requestAnimationFrame(gameLoop);
+}
+
+// === Level / Speed ===
+let level = 1;
+let piecesPlaced = 0;
+function getDropInterval() {
+  return Math.max(100, 700 - (level - 1) * 50);
+}
+
+// === Input ===
+const keysDown = {};
+let dasTimer = 0;
+const DAS_DELAY = 170; // ms before auto-repeat starts
+const DAS_RATE = 50;   // ms between auto-repeats
+
+document.addEventListener('keydown', (e) => {
+  if (!gameStarted || gameOver || dropping) return;
+  if (keysDown[e.key]) return; // ignore key repeat from OS
+  keysDown[e.key] = true;
+
+  switch (e.key) {
+    case 'ArrowLeft':
+      e.preventDefault();
+      moveLeft();
+      break;
+    case 'ArrowRight':
+      e.preventDefault();
+      moveRight();
+      break;
+    case 'ArrowDown':
+      e.preventDefault();
+      softDrop();
+      break;
+    case 'ArrowUp':
+    case 'z':
+    case 'Z':
+      e.preventDefault();
+      rotate();
+      break;
+    case ' ':
+      e.preventDefault();
+      hardDrop();
+      break;
+  }
+});
+
+document.addEventListener('keyup', (e) => {
+  keysDown[e.key] = false;
+});
+
+// Touch controls
+canvas.addEventListener('touchstart', (e) => {
+  const t = e.touches[0];
+  touchStartX = t.clientX;
+  touchStartY = t.clientY;
+  e.preventDefault();
+}, { passive: false });
+
+canvas.addEventListener('touchend', (e) => {
+  const t = e.changedTouches[0];
+  const dx = t.clientX - touchStartX;
+  const dy = t.clientY - touchStartY;
+
+  if (!gameStarted || gameOver || dropping) return;
+
+  if (Math.abs(dx) < 15 && Math.abs(dy) < 15) {
+    // Tap = rotate
+    rotate();
+  } else if (Math.abs(dx) > Math.abs(dy)) {
+    if (dx > 30) moveRight();
+    else if (dx < -30) moveLeft();
+  } else {
+    if (dy > 40) hardDrop();
+  }
+  e.preventDefault();
+}, { passive: false });
+
+// === Init ===
+function startGame() {
+  initBoard();
+  score = 0;
+  chain = 0;
+  maxChain = 0;
+  level = 1;
+  piecesPlaced = 0;
+  dropInterval = 700;
+  gameOver = false;
+  dropping = false;
+  particles = [];
+  current = null;
+  nextPiece = null;
+  dropTimer = 0;
+  lastTime = 0;
+
+  document.getElementById('startScreen').style.display = 'none';
+  document.getElementById('gameOverScreen').style.display = 'none';
+
+  gameStarted = true;
+  spawnPiece();
+  updateUI();
+}
+
+// Build character legend
+function buildLegend() {
+  const legend = document.getElementById('charLegend');
+  legend.innerHTML = '';
+  CHARS.forEach(ch => {
+    const item = document.createElement('div');
+    item.className = 'char-item';
+    const dot = document.createElement('div');
+    dot.className = 'char-dot';
+    dot.style.backgroundColor = ch.bgColor;
+    dot.style.borderColor = ch.color;
+    const label = document.createElement('span');
+    label.textContent = ch.name;
+    item.appendChild(dot);
+    item.appendChild(label);
+    legend.appendChild(item);
+  });
+}
+
+document.getElementById('startBtn').addEventListener('click', () => { initAudio(); startGame(); });
+document.getElementById('retryBtn').addEventListener('click', () => { initAudio(); startGame(); });
+
+buildLegend();
+requestAnimationFrame(gameLoop);
+</script>
+</body>
+</html>
