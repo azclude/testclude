@@ -161,11 +161,11 @@ ul {
 .btn--sm {
   font-size: var(--font-size-sm);
   padding: 0.5rem 1.25rem;
-  background: linear-gradient(135deg, #e87f9a 0%, #d4607e 100%);
+  background: linear-gradient(135deg, #06C755 0%, #05a847 100%);
   color: var(--color-white);
 }
 .btn--sm:hover {
-  background: linear-gradient(135deg, #d4607e 0%, #c04a68 100%);
+  background: linear-gradient(135deg, #05a847 0%, #049a3e 100%);
   color: var(--color-white);
   transform: translateY(-1px);
   box-shadow: var(--shadow-md);
@@ -174,25 +174,25 @@ ul {
 .btn--lg {
   font-size: var(--font-size-md);
   padding: 1rem 2.5rem;
-  background: linear-gradient(135deg, #e87f9a 0%, #d4607e 100%);
+  background: linear-gradient(135deg, #06C755 0%, #05a847 100%);
   color: var(--color-white);
-  box-shadow: 0 2px 8px rgba(232,127,154,0.3);
+  box-shadow: 0 2px 8px rgba(6,199,85,0.3);
   letter-spacing: 0.03em;
 }
 .btn--lg:hover {
-  background: linear-gradient(135deg, #d4607e 0%, #c04a68 100%);
+  background: linear-gradient(135deg, #05a847 0%, #049a3e 100%);
   color: var(--color-white);
   transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(232,127,154,0.4);
+  box-shadow: 0 4px 16px rgba(6,199,85,0.4);
 }
 
 .btn--white {
   background-color: var(--color-white);
-  color: var(--color-primary);
+  color: #06C755;
 }
 .btn--white:hover {
   background-color: #f0f0f0;
-  color: var(--color-primary-dark);
+  color: #05a847;
   transform: translateY(-2px);
   box-shadow: var(--shadow-lg);
 }
@@ -242,7 +242,7 @@ ul {
 .header__logo:hover { color: var(--color-text); }
 
 .header__logo-accent {
-  color: var(--color-primary);
+  color: #06C755;
   font-weight: var(--font-weight-extrabold);
 }
 
@@ -326,7 +326,33 @@ ul {
   display: flex;
   align-items: center;
   overflow: hidden;
-  background: linear-gradient(135deg, #fdf8f4 0%, #fff1f2 40%, #fdf8f4 100%);
+}
+
+.hero__bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.hero__bg-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center right;
+  display: block;
+}
+
+.hero__bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to right,
+    rgba(253, 248, 244, 0.97) 0%,
+    rgba(253, 248, 244, 0.88) 35%,
+    rgba(253, 248, 244, 0.45) 65%,
+    rgba(253, 248, 244, 0.1) 100%
+  );
 }
 
 .hero__inner {
@@ -335,47 +361,16 @@ ul {
   padding-top: calc(var(--header-height) + var(--space-3xl));
   padding-bottom: var(--space-3xl);
   width: 100%;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  align-items: center;
-  gap: var(--space-3xl);
 }
 
 .hero__content {
   max-width: 560px;
 }
 
-.hero__visual {
-  position: relative;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.hero__image-wrapper {
-  position: relative;
-  border-radius: var(--radius-xl);
-  overflow: hidden;
-  box-shadow:
-    0 20px 60px rgba(232, 127, 154, 0.15),
-    0 8px 24px rgba(0, 0, 0, 0.08);
-  max-width: 480px;
-  width: 100%;
-  aspect-ratio: 4 / 3;
-}
-
-.hero__image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center;
-  display: block;
-}
-
 .hero__visual-badge {
   position: absolute;
-  bottom: -12px;
-  left: -16px;
+  bottom: 40px;
+  right: 40px;
   background: var(--color-white);
   border-radius: var(--radius-lg);
   padding: 12px 18px;
@@ -467,7 +462,7 @@ ul {
   font-size: var(--font-size-md);
   font-weight: var(--font-weight-bold);
   padding: 18px 36px;
-  background: linear-gradient(135deg, #e87f9a 0%, #d4607e 100%);
+  background: linear-gradient(135deg, #06C755 0%, #05a847 100%);
   color: #fff;
   border: none;
   border-radius: var(--radius-pill);
@@ -475,19 +470,19 @@ ul {
   text-decoration: none;
   letter-spacing: 0.03em;
   box-shadow:
-    0 4px 20px rgba(232, 127, 154, 0.4),
-    0 0 60px rgba(232, 127, 154, 0.15);
+    0 4px 20px rgba(6, 199, 85, 0.4),
+    0 0 60px rgba(6, 199, 85, 0.15);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   animation: hero-cta-pulse 2.5s ease-in-out infinite;
 }
 
 .btn--hero:hover {
-  background: linear-gradient(135deg, #d4607e 0%, #c04a68 100%);
+  background: linear-gradient(135deg, #05a847 0%, #049a3e 100%);
   color: #fff;
   transform: translateY(-3px) scale(1.02);
   box-shadow:
-    0 8px 32px rgba(232, 127, 154, 0.5),
-    0 0 80px rgba(232, 127, 154, 0.2);
+    0 8px 32px rgba(6, 199, 85, 0.5),
+    0 0 80px rgba(6, 199, 85, 0.2);
 }
 
 .btn__line-icon {
@@ -497,8 +492,8 @@ ul {
 }
 
 @keyframes hero-cta-pulse {
-  0%, 100% { box-shadow: 0 4px 20px rgba(232, 127, 154, 0.4), 0 0 60px rgba(232, 127, 154, 0.15); }
-  50% { box-shadow: 0 4px 30px rgba(232, 127, 154, 0.55), 0 0 80px rgba(232, 127, 154, 0.25); }
+  0%, 100% { box-shadow: 0 4px 20px rgba(6, 199, 85, 0.4), 0 0 60px rgba(6, 199, 85, 0.15); }
+  50% { box-shadow: 0 4px 30px rgba(6, 199, 85, 0.55), 0 0 80px rgba(6, 199, 85, 0.25); }
 }
 
 .hero__note {
@@ -1187,7 +1182,7 @@ ul {
   position: absolute;
   inset: 0;
   z-index: 0;
-  background: linear-gradient(135deg, #e87f9a 0%, #d4607e 100%);
+  background: linear-gradient(135deg, #06C755 0%, #05a847 100%);
 }
 
 .final-cta__inner {
@@ -1295,27 +1290,24 @@ ul {
     display: block;
   }
 
+  .hero__bg::after {
+    background: linear-gradient(
+      to bottom,
+      rgba(253, 248, 244, 0.92) 0%,
+      rgba(253, 248, 244, 0.8) 50%,
+      rgba(253, 248, 244, 0.5) 100%
+    );
+  }
   .hero__inner {
-    grid-template-columns: 1fr;
     text-align: center;
-    gap: var(--space-xl);
   }
   .hero__content {
     max-width: 100%;
-    order: 1;
-  }
-  .hero__visual {
-    order: 0;
-    justify-content: center;
-  }
-  .hero__image-wrapper {
-    max-width: 380px;
-    aspect-ratio: 4 / 3;
+    margin: 0 auto;
   }
   .hero__visual-badge {
-    bottom: -8px;
-    left: auto;
-    right: -8px;
+    bottom: 16px;
+    right: 16px;
   }
   .hero__badges {
     justify-content: center;
@@ -1393,13 +1385,10 @@ ul {
   .hero {
     min-height: 100svh;
   }
-  .hero__image-wrapper {
-    max-width: 300px;
-  }
   .hero__visual-badge {
     padding: 8px 12px;
-    bottom: -6px;
-    right: -4px;
+    bottom: 12px;
+    right: 12px;
   }
   .hero__visual-badge-icon {
     font-size: 1.2rem;
