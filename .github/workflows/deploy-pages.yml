@@ -43,7 +43,7 @@ jobs:
         run: |
           mkdir -p _site/diagnosis
           # Copy root-level static files
-          cp -r index.html assets hitokuchi-banushi-yametoke.html tanuki-batting.html tanuki-whack.html _site/ 2>/dev/null || true
+          cp -r index.html assets hitokuchi-banushi-yametoke.html tanuki-batting.html tanuki-whack.html tanuki-puyo.html _site/ 2>/dev/null || true
           # Copy Next.js output into /diagnosis/ subpath
           cp -r home-diagnosis/out/* _site/diagnosis/
 
