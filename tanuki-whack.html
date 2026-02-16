@@ -915,6 +915,8 @@ function startGame() {
   state = State.PLAYING;
   document.getElementById('message-overlay').classList.add('hidden');
   document.getElementById('level-display').textContent = 'Lv.1 ～ひよっこ叩き師～';
+  lastTime = performance.now();
+  requestAnimationFrame(loop);
 }
 
 function updateGame(dt) {
@@ -1277,7 +1279,9 @@ function loop(timestamp) {
 
   ctx.restore();
 
-  requestAnimationFrame(loop);
+  if (state === State.PLAYING || state === State.RESULT) {
+    requestAnimationFrame(loop);
+  }
 }
 
 // ===== Title Screen Animation =====
@@ -1342,7 +1346,7 @@ function animateTitle(timestamp) {
 
   drawParticles();
 
-  requestAnimationFrame(state === State.TITLE ? animateTitle : loop);
+  requestAnimationFrame(animateTitle);
 }
 
 // ===== Init =====
