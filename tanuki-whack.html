@@ -36,23 +36,31 @@ canvas {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 20px;
+  padding: 8px 14px;
   background: linear-gradient(180deg, rgba(0,0,0,0.5) 0%, transparent 100%);
+  flex-wrap: wrap;
 }
 
 #score-display {
-  font-size: 22px;
+  font-size: 20px;
   font-weight: bold;
   color: #FFD700;
   text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
 }
 
 #combo-display {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: bold;
   color: #ff6600;
   text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
   transition: transform 0.1s;
+}
+
+#set-display {
+  font-size: 15px;
+  font-weight: bold;
+  color: #88ccff;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
 }
 
 #timer-display {
@@ -60,16 +68,40 @@ canvas {
   font-weight: bold;
   color: #fff;
   text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+  min-width: 32px;
+  text-align: right;
 }
 
 #level-display {
   position: absolute;
-  top: 50px;
+  top: 44px;
   left: 50%;
   transform: translateX(-50%);
-  font-size: 16px;
+  font-size: 14px;
   color: #ffcc66;
   text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+  white-space: nowrap;
+}
+
+#chance-banner {
+  position: absolute;
+  top: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: clamp(20px, 5vw, 36px);
+  font-weight: 900;
+  color: #FFD700;
+  text-shadow: 0 0 15px #ff6600, 0 0 30px #ff3300, 2px 2px 4px rgba(0,0,0,0.8);
+  white-space: nowrap;
+  display: none;
+  animation: chancePulse 0.5s infinite alternate;
+  z-index: 12;
+  pointer-events: none;
+}
+
+@keyframes chancePulse {
+  0% { transform: translateX(-50%) scale(1); color: #FFD700; }
+  100% { transform: translateX(-50%) scale(1.1); color: #ff8800; }
 }
 
 #message-overlay {
@@ -152,25 +184,11 @@ canvas {
   100% { opacity: 0; transform: translateY(-100px) scale(0.8); }
 }
 
-.miss-text {
-  color: #ff4444;
-  font-size: 24px;
-}
-
-.hit-text {
-  color: #FFD700;
-  font-size: 28px;
-}
-
-.combo-text {
-  color: #ff6600;
-  font-size: 34px;
-}
-
-.bonus-text {
-  color: #ff00ff;
-  font-size: 32px;
-}
+.miss-text { color: #ff4444; font-size: 24px; }
+.hit-text { color: #FFD700; font-size: 28px; }
+.combo-text { color: #ff6600; font-size: 34px; }
+.bonus-text { color: #ff00ff; font-size: 32px; }
+.chance-text { color: #FFD700; font-size: 38px; text-shadow: 0 0 20px #ff6600; }
 </style>
 </head>
 <body>
@@ -179,15 +197,17 @@ canvas {
 <div id="ui-overlay">
   <div id="top-bar">
     <div id="score-display">0 点</div>
+    <div id="set-display"></div>
     <div id="combo-display"></div>
-    <div id="timer-display">30</div>
+    <div id="timer-display">20</div>
   </div>
   <div id="level-display"></div>
+  <div id="chance-banner">★ チャンスタイム！！ ★</div>
 </div>
 
 <div id="message-overlay">
   <div id="message-title">伝説のたぬき叩き</div>
-  <div id="message-sub">穴から出てくるたぬきを叩け！<br><span style="color:#ff4444">赤く光る「ニセモノ」は叩くな！</span></div>
+  <div id="message-sub">穴から出てくるたぬきを叩け！<br><span style="color:#ff4444">赤く光る「ニセモノ」は叩くな！</span><br><span style="color:#88ffaa">★マークのアイテムでチャンスタイム！</span></div>
   <div id="message-comment"></div>
   <div id="message-action">タップ / クリック でスタート</div>
 </div>
@@ -214,11 +234,9 @@ function calculateLayout() {
   const w = canvas.width;
   const h = canvas.height;
   const isPortrait = h > w;
-
   holes = [];
 
   if (isPortrait) {
-    // 3x3 grid for portrait
     const cols = 3, rows = 3;
     const startY = h * 0.28;
     const endY = h * 0.82;
@@ -226,20 +244,16 @@ function calculateLayout() {
     const endX = w * 0.85;
     holeRadius = Math.min(w / 8, 50);
     tanukiSize = holeRadius * 0.75;
-
     for (let r = 0; r < rows; r++) {
       for (let c = 0; c < cols; c++) {
         holes.push({
           x: startX + (endX - startX) * c / (cols - 1),
           y: startY + (endY - startY) * r / (rows - 1),
-          tanuki: null,
-          hitAnim: 0,
-          missAnim: 0,
+          tanuki: null, hitAnim: 0, missAnim: 0,
         });
       }
     }
   } else {
-    // 3x3 grid for landscape
     const cols = 3, rows = 3;
     const startY = h * 0.25;
     const endY = h * 0.85;
@@ -247,15 +261,12 @@ function calculateLayout() {
     const endX = w * 0.8;
     holeRadius = Math.min(w / 12, 55);
     tanukiSize = holeRadius * 0.75;
-
     for (let r = 0; r < rows; r++) {
       for (let c = 0; c < cols; c++) {
         holes.push({
           x: startX + (endX - startX) * c / (cols - 1),
           y: startY + (endY - startY) * r / (rows - 1),
-          tanuki: null,
-          hitAnim: 0,
-          missAnim: 0,
+          tanuki: null, hitAnim: 0, missAnim: 0,
         });
       }
     }
@@ -266,17 +277,21 @@ resize();
 window.addEventListener('resize', resize);
 
 // ===== Game Constants =====
-const GAME_DURATION = 30; // seconds
+const SET_COUNT = 5;
+const SET_DURATION = 20;
+const CHANCE_DURATION = 6;
+
 const TANUKI_TYPES = {
-  NORMAL: 'normal',       // +10 points, brown tanuki
-  GOLDEN: 'golden',       // +50 points, golden tanuki (rare)
-  BOSS: 'boss',           // +100 points, big tanuki with hat (very rare)
-  BOMB: 'bomb',           // -30 points, dark tanuki with X eyes
-  SPEEDY: 'speedy',       // +20 points, fast tanuki with sweat
+  NORMAL: 'normal',
+  GOLDEN: 'golden',
+  BOSS: 'boss',
+  BOMB: 'bomb',
+  SPEEDY: 'speedy',
+  ITEM: 'item',
 };
 
 // ===== Game State =====
-const State = { TITLE: 0, PLAYING: 1, RESULT: 2 };
+const State = { TITLE: 0, PLAYING: 1, SET_RESULT: 2, RESULT: 3 };
 let state = State.TITLE;
 let score = 0;
 let combo = 0;
@@ -284,7 +299,7 @@ let maxCombo = 0;
 let hitCount = 0;
 let missCount = 0;
 let totalSpawned = 0;
-let timeLeft = GAME_DURATION;
+let timeLeft = SET_DURATION;
 let level = 1;
 let bestScore = parseInt(localStorage.getItem('tanuki_whack_best') || '0');
 let spawnTimer = 0;
@@ -293,6 +308,16 @@ let particles = [];
 let shakeAmount = 0;
 let gameTime = 0;
 let levelUpAnim = 0;
+
+// Set system
+let currentSet = 1;
+let setScores = [];
+let setHits = [];
+
+// Chance time
+let chanceTime = 0;
+let chanceTimeActive = false;
+let itemSpawnCooldown = 0;
 
 // ===== Funny Comments =====
 const resultComments = {
@@ -333,6 +358,13 @@ const resultComments = {
   ],
 };
 
+const setComments = [
+  "ウォーミングアップ完了！",
+  "エンジンかかってきたな！",
+  "後半戦突入！気合い入れろ！",
+  "あと少し！全力で行け！",
+];
+
 const hitComments = [
   "ナイス！", "いいぞ！", "やるね！", "すごい！",
   "お見事！", "バシッ！", "ドカッ！", "ぽかっ！",
@@ -365,6 +397,12 @@ const levelUpComments = [
   "たぬきたちが怒っている！",
   "まだまだ行くぞ！",
   "最高速度突入！",
+];
+
+const chanceStartComments = [
+  "チャンスタイム突入！叩きまくれ！",
+  "レアたぬき大量発生！！",
+  "ボーナスステージ！逃すな！",
 ];
 
 // ===== Floating Text System =====
@@ -426,7 +464,6 @@ function drawParticles() {
   for (const p of particles) {
     ctx.globalAlpha = Math.max(0, p.life);
     ctx.fillStyle = p.color;
-
     if (p.isStar) {
       drawStar(p.x, p.y, p.size, p.size * 0.4, 5);
     } else {
@@ -452,7 +489,6 @@ function drawStar(cx, cy, outerR, innerR, points) {
 
 // ===== Drawing Functions =====
 function drawBackground() {
-  // Dirt/ground background
   const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
   grad.addColorStop(0, '#1a472a');
   grad.addColorStop(0.15, '#2d5a3f');
@@ -462,11 +498,9 @@ function drawBackground() {
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // Grass at top
   ctx.fillStyle = '#2d7a3a';
   ctx.fillRect(0, 0, canvas.width, canvas.height * 0.18);
 
-  // Grass edge
   const grassY = canvas.height * 0.18;
   ctx.fillStyle = '#3a8f48';
   for (let x = 0; x < canvas.width; x += 20) {
@@ -476,7 +510,6 @@ function drawBackground() {
     ctx.fill();
   }
 
-  // Decorative dirt patches
   ctx.fillStyle = 'rgba(90, 60, 30, 0.3)';
   for (let i = 0; i < 8; i++) {
     const px = ((i * 173 + 50) % canvas.width);
@@ -485,38 +518,43 @@ function drawBackground() {
     ctx.ellipse(px, py, 30 + i * 5, 15 + i * 2, i * 0.3, 0, Math.PI * 2);
     ctx.fill();
   }
+
+  // Chance time golden border
+  if (chanceTimeActive) {
+    const flash = 0.3 + Math.sin(gameTime * 8) * 0.2;
+    ctx.globalAlpha = flash;
+    ctx.strokeStyle = '#FFD700';
+    ctx.lineWidth = 8;
+    ctx.strokeRect(4, 4, canvas.width - 8, canvas.height - 8);
+    ctx.globalAlpha = 1;
+  }
 }
 
 function drawHole(hole) {
   const { x, y } = hole;
 
-  // Shadow under hole
   ctx.fillStyle = 'rgba(0,0,0,0.3)';
   ctx.beginPath();
   ctx.ellipse(x, y + holeRadius * 0.6, holeRadius * 1.3, holeRadius * 0.4, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // Hole (dark ellipse)
   ctx.fillStyle = '#1a0e06';
   ctx.beginPath();
   ctx.ellipse(x, y, holeRadius, holeRadius * 0.45, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // Hole rim
   ctx.strokeStyle = '#3d2b1a';
   ctx.lineWidth = 3;
   ctx.beginPath();
   ctx.ellipse(x, y, holeRadius, holeRadius * 0.45, 0, 0, Math.PI * 2);
   ctx.stroke();
 
-  // Inner highlight
   ctx.strokeStyle = '#2a1c0f';
   ctx.lineWidth = 1.5;
   ctx.beginPath();
   ctx.ellipse(x, y, holeRadius * 0.8, holeRadius * 0.35, 0, 0, Math.PI * 2);
   ctx.stroke();
 
-  // Hit flash
   if (hole.hitAnim > 0) {
     ctx.globalAlpha = hole.hitAnim;
     ctx.fillStyle = '#FFD700';
@@ -526,7 +564,6 @@ function drawHole(hole) {
     ctx.globalAlpha = 1;
   }
 
-  // Miss flash
   if (hole.missAnim > 0) {
     ctx.globalAlpha = hole.missAnim * 0.5;
     ctx.fillStyle = '#ff0000';
@@ -540,54 +577,61 @@ function drawHole(hole) {
 function drawTanuki(x, y, s, type, popProgress, wobble) {
   ctx.save();
 
-  // Pop-up: tanuki rises from hole
   const riseOffset = (1 - popProgress) * s * 2.2;
   const tanukiY = y - s * 0.6 - riseOffset;
 
-  // Clip to hole region (tanuki emerges from hole)
   ctx.beginPath();
   ctx.rect(0, 0, canvas.width, y - holeRadius * 0.1);
   ctx.clip();
 
   ctx.translate(x, tanukiY);
 
-  // Wobble animation
   const wobbleAngle = Math.sin(wobble * 8) * 0.08;
   ctx.rotate(wobbleAngle);
 
-  // Scale based on type
   let scale = 1;
   if (type === TANUKI_TYPES.BOSS) scale = 1.3;
   if (type === TANUKI_TYPES.SPEEDY) scale = 0.85;
+  if (type === TANUKI_TYPES.ITEM) scale = 0.95;
   ctx.scale(scale, scale);
 
-  // Colors based on type
   let bodyColor, bellyColor, darkColor;
   switch (type) {
     case TANUKI_TYPES.GOLDEN:
-      bodyColor = '#DAA520';
-      bellyColor = '#FFD700';
-      darkColor = '#8B6914';
-      break;
+      bodyColor = '#DAA520'; bellyColor = '#FFD700'; darkColor = '#8B6914'; break;
     case TANUKI_TYPES.BOMB:
-      bodyColor = '#5a1a5a';
-      bellyColor = '#8a3a8a';
-      darkColor = '#3a0a3a';
-      break;
+      bodyColor = '#5a1a5a'; bellyColor = '#8a3a8a'; darkColor = '#3a0a3a'; break;
     case TANUKI_TYPES.BOSS:
-      bodyColor = '#8B4513';
-      bellyColor = '#D2691E';
-      darkColor = '#3E1A00';
-      break;
+      bodyColor = '#8B4513'; bellyColor = '#D2691E'; darkColor = '#3E1A00'; break;
     case TANUKI_TYPES.SPEEDY:
-      bodyColor = '#a0783c';
-      bellyColor = '#d4b87a';
-      darkColor = '#5a4020';
-      break;
+      bodyColor = '#a0783c'; bellyColor = '#d4b87a'; darkColor = '#5a4020'; break;
+    case TANUKI_TYPES.ITEM:
+      bodyColor = '#44bb88'; bellyColor = '#88ffcc'; darkColor = '#226644'; break;
     default:
-      bodyColor = '#8B6914';
-      bellyColor = '#D4A847';
-      darkColor = '#3E2723';
+      bodyColor = '#8B6914'; bellyColor = '#D4A847'; darkColor = '#3E2723';
+  }
+
+  // === ITEM: rainbow glow ===
+  if (type === TANUKI_TYPES.ITEM) {
+    const hue = (wobble * 200) % 360;
+    const glow = 0.35 + Math.sin(wobble * 6) * 0.15;
+    ctx.globalAlpha = glow;
+    ctx.fillStyle = `hsl(${hue}, 100%, 70%)`;
+    ctx.beginPath();
+    ctx.arc(0, -s * 0.2, s * 0.95, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+
+  // === BOMB: red danger aura ===
+  if (type === TANUKI_TYPES.BOMB) {
+    const flash = 0.4 + Math.sin(wobble * 10) * 0.3;
+    ctx.globalAlpha = flash;
+    ctx.fillStyle = '#ff0000';
+    ctx.beginPath();
+    ctx.arc(0, -s * 0.2, s * 0.9, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
   }
 
   // Body
@@ -610,63 +654,35 @@ function drawTanuki(x, y, s, type, popProgress, wobble) {
 
   // Ears
   ctx.fillStyle = darkColor;
-  ctx.beginPath();
-  ctx.arc(-s * 0.32, -s * 0.72, s * 0.14, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.arc(s * 0.32, -s * 0.72, s * 0.14, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Inner ears
+  ctx.beginPath(); ctx.arc(-s * 0.32, -s * 0.72, s * 0.14, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(s * 0.32, -s * 0.72, s * 0.14, 0, Math.PI * 2); ctx.fill();
   ctx.fillStyle = '#ffb6c1';
-  ctx.beginPath();
-  ctx.arc(-s * 0.32, -s * 0.72, s * 0.08, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.arc(s * 0.32, -s * 0.72, s * 0.08, 0, Math.PI * 2);
-  ctx.fill();
+  ctx.beginPath(); ctx.arc(-s * 0.32, -s * 0.72, s * 0.08, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(s * 0.32, -s * 0.72, s * 0.08, 0, Math.PI * 2); ctx.fill();
 
-  // Eye patches (tanuki markings)
+  // Eye patches
   ctx.fillStyle = darkColor;
-  ctx.beginPath();
-  ctx.ellipse(-s * 0.18, -s * 0.4, s * 0.16, s * 0.12, -0.2, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.ellipse(s * 0.18, -s * 0.4, s * 0.16, s * 0.12, 0.2, 0, Math.PI * 2);
-  ctx.fill();
+  ctx.beginPath(); ctx.ellipse(-s * 0.18, -s * 0.4, s * 0.16, s * 0.12, -0.2, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(s * 0.18, -s * 0.4, s * 0.16, s * 0.12, 0.2, 0, Math.PI * 2); ctx.fill();
 
+  // === Eyes per type ===
   if (type === TANUKI_TYPES.BOMB) {
-    // Flashing red danger aura
-    const flash = 0.4 + Math.sin(wobble * 10) * 0.3;
-    ctx.globalAlpha = flash;
-    ctx.fillStyle = '#ff0000';
-    ctx.beginPath();
-    ctx.arc(0, -s * 0.2, s * 0.9, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.globalAlpha = 1;
-
-    // Red outline around body
+    // Red outline
     ctx.strokeStyle = '#ff0000';
     ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.ellipse(0, s * 0.15, s * 0.73, s * 0.58, 0, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.arc(0, -s * 0.35, s * 0.48, 0, Math.PI * 2);
-    ctx.stroke();
+    ctx.beginPath(); ctx.ellipse(0, s * 0.15, s * 0.73, s * 0.58, 0, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath(); ctx.arc(0, -s * 0.35, s * 0.48, 0, Math.PI * 2); ctx.stroke();
 
-    // Big X eyes for bomb
+    // Big X eyes
     ctx.strokeStyle = '#ff0000';
     ctx.lineWidth = 3.5;
     const eyeSize = s * 0.12;
-    // Left X
     ctx.beginPath();
     ctx.moveTo(-s * 0.18 - eyeSize, -s * 0.42 - eyeSize);
     ctx.lineTo(-s * 0.18 + eyeSize, -s * 0.42 + eyeSize);
     ctx.moveTo(-s * 0.18 + eyeSize, -s * 0.42 - eyeSize);
     ctx.lineTo(-s * 0.18 - eyeSize, -s * 0.42 + eyeSize);
     ctx.stroke();
-    // Right X
     ctx.beginPath();
     ctx.moveTo(s * 0.18 - eyeSize, -s * 0.42 - eyeSize);
     ctx.lineTo(s * 0.18 + eyeSize, -s * 0.42 + eyeSize);
@@ -674,7 +690,7 @@ function drawTanuki(x, y, s, type, popProgress, wobble) {
     ctx.lineTo(s * 0.18 - eyeSize, -s * 0.42 + eyeSize);
     ctx.stroke();
 
-    // "ニセモノ!" label above head
+    // "ニセモノ!" label
     ctx.fillStyle = '#ff0000';
     ctx.font = `bold ${s * 0.32}px sans-serif`;
     ctx.textAlign = 'center';
@@ -686,36 +702,33 @@ function drawTanuki(x, y, s, type, popProgress, wobble) {
     // Angry mark
     ctx.fillStyle = '#ff3333';
     ctx.font = `${s * 0.3}px sans-serif`;
-    ctx.textAlign = 'center';
     ctx.fillText('💢', s * 0.4, -s * 0.6);
+  } else if (type === TANUKI_TYPES.ITEM) {
+    // Star eyes
+    ctx.fillStyle = '#FFD700';
+    drawStar(-s * 0.16, -s * 0.42, s * 0.1, s * 0.04, 5);
+    drawStar(s * 0.16, -s * 0.42, s * 0.1, s * 0.04, 5);
+
+    // "★" label above
+    ctx.fillStyle = '#FFD700';
+    ctx.font = `bold ${s * 0.35}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2;
+    ctx.strokeText('★ITEM★', 0, -s * 0.88);
+    ctx.fillText('★ITEM★', 0, -s * 0.88);
   } else {
     // Normal eyes
     ctx.fillStyle = '#fff';
-    ctx.beginPath();
-    ctx.arc(-s * 0.16, -s * 0.42, s * 0.09, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(s * 0.16, -s * 0.42, s * 0.09, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Pupils (look around)
+    ctx.beginPath(); ctx.arc(-s * 0.16, -s * 0.42, s * 0.09, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(s * 0.16, -s * 0.42, s * 0.09, 0, Math.PI * 2); ctx.fill();
     const lookX = Math.sin(wobble * 3) * s * 0.02;
     ctx.fillStyle = '#000';
-    ctx.beginPath();
-    ctx.arc(-s * 0.15 + lookX, -s * 0.42, s * 0.045, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(s * 0.17 + lookX, -s * 0.42, s * 0.045, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Eye sparkle
+    ctx.beginPath(); ctx.arc(-s * 0.15 + lookX, -s * 0.42, s * 0.045, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(s * 0.17 + lookX, -s * 0.42, s * 0.045, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = '#fff';
-    ctx.beginPath();
-    ctx.arc(-s * 0.17, -s * 0.44, s * 0.025, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(s * 0.15, -s * 0.44, s * 0.025, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.beginPath(); ctx.arc(-s * 0.17, -s * 0.44, s * 0.025, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(s * 0.15, -s * 0.44, s * 0.025, 0, Math.PI * 2); ctx.fill();
   }
 
   // Nose
@@ -726,117 +739,78 @@ function drawTanuki(x, y, s, type, popProgress, wobble) {
 
   // Mouth
   if (type === TANUKI_TYPES.BOMB) {
-    // Angry mouth
-    ctx.strokeStyle = '#000';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.arc(0, -s * 0.18, s * 0.08, Math.PI + 0.3, -0.3);
-    ctx.stroke();
-  } else if (type === TANUKI_TYPES.GOLDEN) {
-    // Happy mouth
-    ctx.strokeStyle = '#000';
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.arc(0, -s * 0.23, s * 0.08, 0.2, Math.PI - 0.2);
-    ctx.stroke();
-    // Blush
+    ctx.strokeStyle = '#000'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(0, -s * 0.18, s * 0.08, Math.PI + 0.3, -0.3); ctx.stroke();
+  } else if (type === TANUKI_TYPES.GOLDEN || type === TANUKI_TYPES.ITEM) {
+    ctx.strokeStyle = '#000'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(0, -s * 0.23, s * 0.08, 0.2, Math.PI - 0.2); ctx.stroke();
     ctx.fillStyle = 'rgba(255,150,150,0.5)';
-    ctx.beginPath();
-    ctx.ellipse(-s * 0.28, -s * 0.3, s * 0.07, s * 0.04, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.ellipse(s * 0.28, -s * 0.3, s * 0.07, s * 0.04, 0, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.beginPath(); ctx.ellipse(-s * 0.28, -s * 0.3, s * 0.07, s * 0.04, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(s * 0.28, -s * 0.3, s * 0.07, s * 0.04, 0, 0, Math.PI * 2); ctx.fill();
   } else {
-    // Normal cheeky smile
-    ctx.strokeStyle = '#000';
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.arc(0, -s * 0.22, s * 0.07, 0.1, Math.PI - 0.1);
-    ctx.stroke();
-
-    // Blush
+    ctx.strokeStyle = '#000'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(0, -s * 0.22, s * 0.07, 0.1, Math.PI - 0.1); ctx.stroke();
     ctx.fillStyle = 'rgba(255,180,180,0.4)';
-    ctx.beginPath();
-    ctx.ellipse(-s * 0.26, -s * 0.3, s * 0.06, s * 0.035, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.ellipse(s * 0.26, -s * 0.3, s * 0.06, s * 0.035, 0, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.beginPath(); ctx.ellipse(-s * 0.26, -s * 0.3, s * 0.06, s * 0.035, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(s * 0.26, -s * 0.3, s * 0.06, s * 0.035, 0, 0, Math.PI * 2); ctx.fill();
   }
 
   // Special decorations
   if (type === TANUKI_TYPES.GOLDEN) {
-    // Crown/sparkle
     ctx.fillStyle = '#FFD700';
     drawStar(0, -s * 0.85, s * 0.15, s * 0.06, 5);
-    // Glow
     ctx.globalAlpha = 0.2 + Math.sin(wobble * 5) * 0.1;
     ctx.fillStyle = '#FFD700';
-    ctx.beginPath();
-    ctx.arc(0, -s * 0.2, s * 0.8, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.beginPath(); ctx.arc(0, -s * 0.2, s * 0.8, 0, Math.PI * 2); ctx.fill();
     ctx.globalAlpha = 1;
   }
 
   if (type === TANUKI_TYPES.BOSS) {
-    // Top hat
     ctx.fillStyle = '#1a1a2e';
     ctx.fillRect(-s * 0.25, -s * 1.0, s * 0.5, s * 0.3);
     ctx.fillRect(-s * 0.35, -s * 0.72, s * 0.7, s * 0.06);
-    // Hat band
     ctx.fillStyle = '#cc0000';
     ctx.fillRect(-s * 0.25, -s * 0.76, s * 0.5, s * 0.05);
-    // Monocle
-    ctx.strokeStyle = '#DAA520';
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.arc(s * 0.2, -s * 0.42, s * 0.12, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(s * 0.32, -s * 0.42);
-    ctx.lineTo(s * 0.45, -s * 0.1);
-    ctx.stroke();
+    ctx.strokeStyle = '#DAA520'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(s * 0.2, -s * 0.42, s * 0.12, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(s * 0.32, -s * 0.42); ctx.lineTo(s * 0.45, -s * 0.1); ctx.stroke();
   }
 
   if (type === TANUKI_TYPES.SPEEDY) {
-    // Sweat drops
     ctx.fillStyle = '#87CEEB';
     ctx.beginPath();
     ctx.moveTo(s * 0.4, -s * 0.55);
     ctx.quadraticCurveTo(s * 0.45, -s * 0.45, s * 0.38, -s * 0.38);
     ctx.quadraticCurveTo(s * 0.35, -s * 0.47, s * 0.4, -s * 0.55);
     ctx.fill();
-    // Speed lines
-    ctx.strokeStyle = 'rgba(255,255,255,0.5)';
-    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth = 1.5;
     for (let i = 0; i < 3; i++) {
       const ly = -s * 0.5 + i * s * 0.2;
-      ctx.beginPath();
-      ctx.moveTo(-s * 0.8, ly);
-      ctx.lineTo(-s * 0.5, ly);
-      ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(-s * 0.8, ly); ctx.lineTo(-s * 0.5, ly); ctx.stroke();
     }
   }
 
-  // Arms (little paws waving)
+  if (type === TANUKI_TYPES.ITEM) {
+    // Orbiting stars
+    for (let i = 0; i < 4; i++) {
+      const angle = wobble * 4 + i * Math.PI / 2;
+      const orbitX = Math.cos(angle) * s * 0.65;
+      const orbitY = Math.sin(angle) * s * 0.35 - s * 0.2;
+      ctx.fillStyle = ['#FFD700', '#ff66aa', '#66ffaa', '#66aaff'][i];
+      drawStar(orbitX, orbitY, s * 0.08, s * 0.03, 5);
+    }
+  }
+
+  // Arms
   ctx.fillStyle = bodyColor;
   const armWave = Math.sin(wobble * 6) * 0.3;
-  // Left arm
   ctx.save();
-  ctx.translate(-s * 0.55, -s * 0.05);
-  ctx.rotate(-0.5 + armWave);
-  ctx.beginPath();
-  ctx.ellipse(0, 0, s * 0.12, s * 0.2, 0, 0, Math.PI * 2);
-  ctx.fill();
+  ctx.translate(-s * 0.55, -s * 0.05); ctx.rotate(-0.5 + armWave);
+  ctx.beginPath(); ctx.ellipse(0, 0, s * 0.12, s * 0.2, 0, 0, Math.PI * 2); ctx.fill();
   ctx.restore();
-  // Right arm
   ctx.save();
-  ctx.translate(s * 0.55, -s * 0.05);
-  ctx.rotate(0.5 - armWave);
-  ctx.beginPath();
-  ctx.ellipse(0, 0, s * 0.12, s * 0.2, 0, 0, Math.PI * 2);
-  ctx.fill();
+  ctx.translate(s * 0.55, -s * 0.05); ctx.rotate(0.5 - armWave);
+  ctx.beginPath(); ctx.ellipse(0, 0, s * 0.12, s * 0.2, 0, 0, Math.PI * 2); ctx.fill();
   ctx.restore();
 
   ctx.restore();
@@ -844,14 +818,10 @@ function drawTanuki(x, y, s, type, popProgress, wobble) {
 
 function drawHoleFront(hole) {
   const { x, y } = hole;
-
-  // Front rim of hole (covers bottom of tanuki)
   ctx.fillStyle = '#5c3a1e';
   ctx.beginPath();
   ctx.ellipse(x, y + holeRadius * 0.05, holeRadius * 1.05, holeRadius * 0.3, 0, 0, Math.PI);
   ctx.fill();
-
-  // Rim highlight
   ctx.fillStyle = '#7a5030';
   ctx.beginPath();
   ctx.ellipse(x, y - holeRadius * 0.05, holeRadius * 0.95, holeRadius * 0.15, 0, 0, Math.PI);
@@ -860,53 +830,72 @@ function drawHoleFront(hole) {
 
 // ===== Tanuki Spawning =====
 function spawnTanuki() {
-  // Find available holes
   const available = holes.filter(h => h.tanuki === null);
   if (available.length === 0) return;
 
   const hole = available[Math.floor(Math.random() * available.length)];
 
-  // Decide type based on level and luck
   let type = TANUKI_TYPES.NORMAL;
-  const r = Math.random();
 
-  if (r < 0.03 + level * 0.005) {
-    type = TANUKI_TYPES.BOSS;
-  } else if (r < 0.08 + level * 0.008) {
-    type = TANUKI_TYPES.GOLDEN;
-  } else if (r < 0.15 + level * 0.015) {
-    type = TANUKI_TYPES.BOMB;
-  } else if (r < 0.25 + level * 0.02) {
-    type = TANUKI_TYPES.SPEEDY;
+  if (chanceTimeActive) {
+    // Chance time: only rare tanuki, no bombs
+    const r = Math.random();
+    if (r < 0.3) {
+      type = TANUKI_TYPES.BOSS;
+    } else if (r < 0.6) {
+      type = TANUKI_TYPES.GOLDEN;
+    } else if (r < 0.8) {
+      type = TANUKI_TYPES.SPEEDY;
+    } else {
+      type = TANUKI_TYPES.NORMAL;
+    }
+  } else {
+    // Normal spawning
+    const r = Math.random();
+    const setBonus = (currentSet - 1) * 0.005;
+
+    if (itemSpawnCooldown <= 0 && r < 0.04 + setBonus) {
+      type = TANUKI_TYPES.ITEM;
+      itemSpawnCooldown = 8; // cooldown before next item
+    } else if (r < 0.07 + setBonus * 2) {
+      type = TANUKI_TYPES.BOSS;
+    } else if (r < 0.13 + setBonus * 2) {
+      type = TANUKI_TYPES.GOLDEN;
+    } else if (r < 0.20 + currentSet * 0.02) {
+      type = TANUKI_TYPES.BOMB;
+    } else if (r < 0.30 + setBonus * 2) {
+      type = TANUKI_TYPES.SPEEDY;
+    }
   }
 
-  // Duration based on type and level
+  // Duration based on type and set difficulty
+  const speedFactor = Math.max(0.4, 1 - (currentSet - 1) * 0.1);
   let stayDuration;
-  const speedFactor = Math.max(0.35, 1 - level * 0.08);
   switch (type) {
     case TANUKI_TYPES.SPEEDY:
-      stayDuration = (0.5 + Math.random() * 0.3) * speedFactor;
-      break;
+      stayDuration = (0.5 + Math.random() * 0.3) * speedFactor; break;
     case TANUKI_TYPES.BOSS:
-      stayDuration = (1.8 + Math.random() * 0.5) * speedFactor;
-      break;
+      stayDuration = (1.8 + Math.random() * 0.5) * speedFactor; break;
     case TANUKI_TYPES.GOLDEN:
-      stayDuration = (0.8 + Math.random() * 0.4) * speedFactor;
-      break;
+      stayDuration = (0.8 + Math.random() * 0.4) * speedFactor; break;
+    case TANUKI_TYPES.ITEM:
+      stayDuration = (1.2 + Math.random() * 0.5) * speedFactor; break;
     default:
       stayDuration = (1.0 + Math.random() * 0.6) * speedFactor;
   }
 
+  // During chance time, tanuki stay a bit longer
+  if (chanceTimeActive) stayDuration *= 1.3;
+
   hole.tanuki = {
     type,
-    popProgress: 0,   // 0 = hidden, 1 = fully out
-    phase: 'rising',   // rising, showing, sinking
+    popProgress: 0,
+    phase: 'rising',
     stayDuration,
     stayTimer: 0,
     wobbleTime: Math.random() * 100,
     hit: false,
   };
-
   totalSpawned++;
 }
 
@@ -918,13 +907,20 @@ function resetGame() {
   hitCount = 0;
   missCount = 0;
   totalSpawned = 0;
-  timeLeft = GAME_DURATION;
+  timeLeft = SET_DURATION;
   level = 1;
   spawnTimer = 0;
   spawnInterval = 1.2;
   particles = [];
   shakeAmount = 0;
   levelUpAnim = 0;
+  currentSet = 1;
+  setScores = [];
+  setHits = [];
+  chanceTime = 0;
+  chanceTimeActive = false;
+  itemSpawnCooldown = 0;
+  gameTime = 0;
 
   for (const h of holes) {
     h.tanuki = null;
@@ -934,15 +930,49 @@ function resetGame() {
 
   document.getElementById('score-display').textContent = '0 点';
   document.getElementById('combo-display').textContent = '';
-  document.getElementById('timer-display').textContent = GAME_DURATION.toString();
+  document.getElementById('timer-display').textContent = SET_DURATION.toString();
+  document.getElementById('set-display').textContent = '';
   document.getElementById('level-display').textContent = '';
+  document.getElementById('chance-banner').style.display = 'none';
+}
+
+function resetSet() {
+  timeLeft = SET_DURATION;
+  spawnTimer = 0;
+  chanceTime = 0;
+  chanceTimeActive = false;
+  itemSpawnCooldown = 0;
+  combo = 0;
+  levelUpAnim = 0;
+
+  for (const h of holes) {
+    h.tanuki = null;
+    h.hitAnim = 0;
+    h.missAnim = 0;
+  }
+
+  document.getElementById('combo-display').textContent = '';
+  document.getElementById('timer-display').textContent = SET_DURATION.toString();
+  document.getElementById('chance-banner').style.display = 'none';
 }
 
 function startGame() {
   resetGame();
   state = State.PLAYING;
   document.getElementById('message-overlay').classList.add('hidden');
-  document.getElementById('level-display').textContent = 'Lv.1 ～ひよっこ叩き師～';
+  document.getElementById('set-display').textContent = `セット 1/${SET_COUNT}`;
+  document.getElementById('level-display').textContent = 'セット1 ～ウォーミングアップ～';
+  lastTime = performance.now();
+  requestAnimationFrame(loop);
+}
+
+function startNextSet() {
+  resetSet();
+  state = State.PLAYING;
+  document.getElementById('message-overlay').classList.add('hidden');
+  const setTitles = ['', 'ウォーミングアップ', '本番開始！', '中盤戦！', '追い込み！', 'ファイナルセット！'];
+  document.getElementById('set-display').textContent = `セット ${currentSet}/${SET_COUNT}`;
+  document.getElementById('level-display').textContent = `セット${currentSet} ～${setTitles[currentSet]}～`;
   lastTime = performance.now();
   requestAnimationFrame(loop);
 }
@@ -953,9 +983,37 @@ function updateGame(dt) {
   gameTime += dt;
   timeLeft -= dt;
 
+  // Chance time countdown
+  if (chanceTimeActive) {
+    chanceTime -= dt;
+    if (chanceTime <= 0) {
+      chanceTime = 0;
+      chanceTimeActive = false;
+      document.getElementById('chance-banner').style.display = 'none';
+    }
+  }
+
+  // Item spawn cooldown
+  if (itemSpawnCooldown > 0) {
+    itemSpawnCooldown -= dt;
+  }
+
   if (timeLeft <= 0) {
     timeLeft = 0;
-    showResult();
+    chanceTimeActive = false;
+    document.getElementById('chance-banner').style.display = 'none';
+
+    // Record this set's results
+    const prevTotal = setScores.reduce((a, b) => a + b, 0);
+    setScores.push(score - prevTotal);
+    const prevHits = setHits.reduce((a, b) => a + b, 0);
+    setHits.push(hitCount - prevHits);
+
+    if (currentSet >= SET_COUNT) {
+      showResult();
+    } else {
+      showSetResult();
+    }
     return;
   }
 
@@ -963,10 +1021,10 @@ function updateGame(dt) {
   const displayTime = Math.ceil(timeLeft);
   const timerEl = document.getElementById('timer-display');
   timerEl.textContent = displayTime.toString();
-  if (displayTime <= 5) {
+  if (displayTime <= 3) {
     timerEl.style.color = '#ff3333';
     timerEl.style.fontSize = '28px';
-  } else if (displayTime <= 10) {
+  } else if (displayTime <= 7) {
     timerEl.style.color = '#ffaa33';
     timerEl.style.fontSize = '24px';
   } else {
@@ -974,34 +1032,21 @@ function updateGame(dt) {
     timerEl.style.fontSize = '22px';
   }
 
-  // Level progression
-  const newLevel = Math.min(8, 1 + Math.floor((GAME_DURATION - timeLeft) / 4));
-  if (newLevel > level) {
-    level = newLevel;
-    levelUpAnim = 1;
-    const titles = [
-      '', 'ひよっこ叩き師', '見習い叩き師', '一人前叩き師',
-      'たぬきハンター', '鬼の叩き師', '達人叩き師', 'たぬき殺法伝承者', '伝説の叩き師'
-    ];
-    document.getElementById('level-display').textContent =
-      `Lv.${level} ～${titles[level]}～`;
-
-    const comment = levelUpComments[Math.min(level - 2, levelUpComments.length - 1)];
-    showFloatingText(canvas.width / 2 - 80, canvas.height * 0.15, comment, 'bonus-text');
-  }
-
   // Spawn tanuki
   spawnTimer += dt;
-  const baseInterval = Math.max(0.3, spawnInterval - level * 0.1);
+  const baseInterval = chanceTimeActive
+    ? Math.max(0.2, 0.4 - currentSet * 0.03)
+    : Math.max(0.35, spawnInterval - currentSet * 0.12);
+
   if (spawnTimer >= baseInterval) {
     spawnTimer = 0;
     spawnTanuki();
-    // Sometimes spawn multiple
-    if (level >= 3 && Math.random() < 0.3) {
-      setTimeout(() => { if (state === State.PLAYING) spawnTanuki(); }, 200);
+    // Extra spawns in later sets or chance time
+    if ((currentSet >= 3 || chanceTimeActive) && Math.random() < 0.35) {
+      setTimeout(() => { if (state === State.PLAYING) spawnTanuki(); }, 150);
     }
-    if (level >= 6 && Math.random() < 0.2) {
-      setTimeout(() => { if (state === State.PLAYING) spawnTanuki(); }, 400);
+    if ((currentSet >= 5 || chanceTimeActive) && Math.random() < 0.25) {
+      setTimeout(() => { if (state === State.PLAYING) spawnTanuki(); }, 300);
     }
   }
 
@@ -1014,17 +1059,13 @@ function updateGame(dt) {
     switch (t.phase) {
       case 'rising':
         t.popProgress += dt * 4;
-        if (t.popProgress >= 1) {
-          t.popProgress = 1;
-          t.phase = 'showing';
-        }
+        if (t.popProgress >= 1) { t.popProgress = 1; t.phase = 'showing'; }
         break;
       case 'showing':
         t.stayTimer += dt;
         if (t.stayTimer >= t.stayDuration) {
           t.phase = 'sinking';
-          // Missed this tanuki
-          if (!t.hit && t.type !== TANUKI_TYPES.BOMB) {
+          if (!t.hit && t.type !== TANUKI_TYPES.BOMB && t.type !== TANUKI_TYPES.ITEM) {
             missCount++;
             combo = 0;
             updateComboDisplay();
@@ -1033,19 +1074,14 @@ function updateGame(dt) {
         break;
       case 'sinking':
         t.popProgress -= dt * 3;
-        if (t.popProgress <= 0) {
-          hole.tanuki = null;
-        }
+        if (t.popProgress <= 0) hole.tanuki = null;
         break;
     }
 
-    // Hit animation sink
     if (t.hit) {
       t.phase = 'sinking';
       t.popProgress -= dt * 5;
-      if (t.popProgress <= 0) {
-        hole.tanuki = null;
-      }
+      if (t.popProgress <= 0) hole.tanuki = null;
     }
   }
 
@@ -1055,18 +1091,13 @@ function updateGame(dt) {
     if (hole.missAnim > 0) hole.missAnim -= dt * 3;
   }
 
-  // Shake decay
   if (shakeAmount > 0) shakeAmount *= 0.9;
   if (shakeAmount < 0.1) shakeAmount = 0;
-
-  // Level up animation decay
   if (levelUpAnim > 0) levelUpAnim -= dt;
 }
 
 function handleHit(x, y) {
   if (state !== State.PLAYING) return;
-
-  let hitSomething = false;
 
   for (const hole of holes) {
     if (!hole.tanuki || hole.tanuki.hit) continue;
@@ -1079,24 +1110,56 @@ function handleHit(x, y) {
     if (dx * dx + dy * dy < hitDist * hitDist) {
       const t = hole.tanuki;
       t.hit = true;
-      hitSomething = true;
 
       if (t.type === TANUKI_TYPES.BOMB) {
-        // Hit a bomb! Penalty!
+        // Bomb penalty
         const penalty = 30;
         score = Math.max(0, score - penalty);
         combo = 0;
         shakeAmount = 15;
-
         spawnParticles(hole.x, hole.y - tanukiSize, 25, '#ff3333', 8);
         spawnParticles(hole.x, hole.y - tanukiSize, 15, '#333', 6);
         hole.missAnim = 1;
-
         const comment = bombHitComments[Math.floor(Math.random() * bombHitComments.length)];
         showFloatingText(hole.x - 60, hole.y - tanukiSize * 2, `-${penalty}点！`, 'miss-text');
         showFloatingText(hole.x - 80, hole.y - tanukiSize * 2.8, comment, 'miss-text');
+        updateComboDisplay();
+
+      } else if (t.type === TANUKI_TYPES.ITEM) {
+        // Trigger chance time!
+        chanceTime = CHANCE_DURATION;
+        chanceTimeActive = true;
+        itemSpawnCooldown = 999; // no more items during chance time
+        shakeAmount = 10;
+
+        // Clear all current tanuki for dramatic effect
+        for (const h of holes) {
+          if (h.tanuki && h !== hole) {
+            h.tanuki.phase = 'sinking';
+          }
+        }
+
+        // Big effects
+        spawnStars(hole.x, hole.y - tanukiSize, 20);
+        spawnParticles(hole.x, hole.y - tanukiSize, 30, '#FFD700', 10);
+        spawnParticles(hole.x, hole.y - tanukiSize, 20, '#ff66aa', 8);
+
+        const comment = chanceStartComments[Math.floor(Math.random() * chanceStartComments.length)];
+        showFloatingText(canvas.width / 2 - 120, canvas.height * 0.15, comment, 'chance-text');
+
+        document.getElementById('chance-banner').style.display = 'block';
+
+        // Bonus points for catching the item
+        score += 30;
+        hitCount++;
+        combo++;
+        if (combo > maxCombo) maxCombo = combo;
+        hole.hitAnim = 1;
+        showFloatingText(hole.x - 50, hole.y - tanukiSize * 2, '+30 ITEM!', 'bonus-text');
+        updateComboDisplay();
+
       } else {
-        // Score based on type
+        // Normal hit scoring
         let points;
         switch (t.type) {
           case TANUKI_TYPES.GOLDEN: points = 50; break;
@@ -1105,7 +1168,9 @@ function handleHit(x, y) {
           default: points = 10;
         }
 
-        // Combo bonus
+        // Chance time doubles points
+        if (chanceTimeActive) points *= 2;
+
         combo++;
         if (combo > maxCombo) maxCombo = combo;
         hitCount++;
@@ -1114,7 +1179,6 @@ function handleHit(x, y) {
         points = Math.round(points * comboMultiplier);
         score += points;
 
-        // Effects
         hole.hitAnim = 1;
         shakeAmount = 5;
 
@@ -1126,32 +1190,23 @@ function handleHit(x, y) {
           spawnStars(hole.x, hole.y - tanukiSize, 10);
         }
 
-        // Floating text
-        const comment = hitComments[Math.floor(Math.random() * hitComments.length)];
         showFloatingText(hole.x - 30, hole.y - tanukiSize * 2, `+${points}`, 'hit-text');
 
         if (t.type === TANUKI_TYPES.GOLDEN) {
           showFloatingText(hole.x - 50, hole.y - tanukiSize * 2.8, '金たぬき！', 'bonus-text');
         } else if (t.type === TANUKI_TYPES.BOSS) {
-          showFloatingText(hole.x - 60, hole.y - tanukiSize * 2.8, 'ボスたぬき！', 'bonus-text');
+          showFloatingText(hole.x - 60, hole.y - tanukiSize * 2.8, 'キングポンピー！', 'bonus-text');
         }
 
-        // Combo comments
         if (comboComments[combo]) {
           showFloatingText(canvas.width / 2 - 100, canvas.height * 0.12, comboComments[combo], 'combo-text');
         }
-
         updateComboDisplay();
       }
 
       document.getElementById('score-display').textContent = `${score} 点`;
-      break; // Only hit one tanuki per click
+      break;
     }
-  }
-
-  if (!hitSomething) {
-    // Clicked empty space - small penalty for wild clicks
-    // Don't penalize, just show a miss
   }
 }
 
@@ -1166,6 +1221,32 @@ function updateComboDisplay() {
   }
 }
 
+function showSetResult() {
+  state = State.SET_RESULT;
+
+  const setScore = setScores[setScores.length - 1];
+  const setHit = setHits[setHits.length - 1];
+  const comment = setComments[Math.min(currentSet - 1, setComments.length - 1)];
+
+  document.getElementById('message-title').textContent = `セット ${currentSet} 終了！`;
+  document.getElementById('message-sub').innerHTML =
+    `このセットのスコア: <span style="color:#FFD700">${setScore} 点</span><br>` +
+    `合計スコア: <span style="color:#FFD700;font-size:1.2em">${score} 点</span><br>` +
+    `ヒット数: ${setHit}`;
+  document.getElementById('message-comment').textContent = comment;
+  document.getElementById('message-action').textContent = `タップで セット ${currentSet + 1} へ（残り ${SET_COUNT - currentSet} セット）`;
+  document.getElementById('message-overlay').classList.remove('hidden');
+
+  // Celebration
+  for (let i = 0; i < 3; i++) {
+    setTimeout(() => {
+      const px = Math.random() * canvas.width;
+      const py = canvas.height * 0.3 + Math.random() * canvas.height * 0.3;
+      spawnStars(px, py, 6);
+    }, i * 200);
+  }
+}
+
 function showResult() {
   state = State.RESULT;
 
@@ -1174,18 +1255,17 @@ function showResult() {
     localStorage.setItem('tanuki_whack_best', bestScore.toString());
   }
 
-  // Determine rating
   let rating, comments;
-  if (score >= 800) {
+  if (score >= 1500) {
     rating = '伝説のたぬき叩き師';
     comments = resultComments.legendary;
-  } else if (score >= 500) {
+  } else if (score >= 1000) {
     rating = 'たぬきマスター';
     comments = resultComments.great;
-  } else if (score >= 300) {
+  } else if (score >= 600) {
     rating = '一人前のたぬき叩き';
     comments = resultComments.good;
-  } else if (score >= 100) {
+  } else if (score >= 250) {
     rating = 'たぬき叩き見習い';
     comments = resultComments.normal;
   } else {
@@ -1196,17 +1276,22 @@ function showResult() {
   const comment = comments[Math.floor(Math.random() * comments.length)];
   const accuracy = totalSpawned > 0 ? Math.round(hitCount / totalSpawned * 100) : 0;
 
+  // Build set breakdown
+  let setBreakdown = '';
+  for (let i = 0; i < setScores.length; i++) {
+    setBreakdown += `セット${i + 1}: ${setScores[i]}点　`;
+  }
+
   document.getElementById('message-title').textContent = rating;
   document.getElementById('message-sub').innerHTML =
-    `スコア: ${score} 点<br>` +
-    `最大コンボ: ${maxCombo}<br>` +
-    `命中率: ${accuracy}%<br>` +
+    `<span style="font-size:1.3em;color:#FFD700">合計: ${score} 点</span><br>` +
+    `<span style="font-size:0.75em">${setBreakdown}</span><br>` +
+    `最大コンボ: ${maxCombo}　命中率: ${accuracy}%<br>` +
     `<span style="color:#FFD700;font-size:0.8em">ベスト: ${bestScore} 点</span>`;
   document.getElementById('message-comment').textContent = comment;
   document.getElementById('message-action').textContent = 'タップ / クリック でもう一度';
   document.getElementById('message-overlay').classList.remove('hidden');
 
-  // Celebration particles
   for (let i = 0; i < 5; i++) {
     setTimeout(() => {
       const px = Math.random() * canvas.width;
@@ -1218,31 +1303,23 @@ function showResult() {
 }
 
 // ===== Input =====
-function getInputPos(e) {
-  if (e.touches) {
-    return { x: e.touches[0].clientX, y: e.touches[0].clientY };
-  }
-  return { x: e.clientX, y: e.clientY };
-}
-
 canvas.addEventListener('click', (e) => {
-  if (state === State.PLAYING) {
-    handleHit(e.clientX, e.clientY);
-  }
+  if (state === State.PLAYING) handleHit(e.clientX, e.clientY);
 });
 
 canvas.addEventListener('touchstart', (e) => {
   e.preventDefault();
   if (state === State.PLAYING) {
-    for (const touch of e.changedTouches) {
-      handleHit(touch.clientX, touch.clientY);
-    }
+    for (const touch of e.changedTouches) handleHit(touch.clientX, touch.clientY);
   }
 }, { passive: false });
 
 document.getElementById('message-overlay').addEventListener('click', () => {
   if (state === State.TITLE || state === State.RESULT) {
     startGame();
+  } else if (state === State.SET_RESULT) {
+    currentSet++;
+    startNextSet();
   }
 });
 
@@ -1250,6 +1327,9 @@ document.getElementById('message-overlay').addEventListener('touchstart', (e) =>
   e.preventDefault();
   if (state === State.TITLE || state === State.RESULT) {
     startGame();
+  } else if (state === State.SET_RESULT) {
+    currentSet++;
+    startNextSet();
   }
 }, { passive: false });
 
@@ -1263,7 +1343,6 @@ function loop(timestamp) {
   updateGame(dt);
   updateParticles(dt);
 
-  // Apply screen shake
   ctx.save();
   if (shakeAmount > 0) {
     ctx.translate(
@@ -1272,32 +1351,19 @@ function loop(timestamp) {
     );
   }
 
-  // Draw everything
   drawBackground();
 
-  // Draw holes back-to-front (top to bottom for proper layering)
   const sortedHoles = [...holes].sort((a, b) => a.y - b.y);
-
   for (const hole of sortedHoles) {
     drawHole(hole);
-
-    // Draw tanuki if present
     if (hole.tanuki && hole.tanuki.popProgress > 0) {
-      drawTanuki(
-        hole.x, hole.y,
-        tanukiSize,
-        hole.tanuki.type,
-        hole.tanuki.popProgress,
-        hole.tanuki.wobbleTime
-      );
+      drawTanuki(hole.x, hole.y, tanukiSize, hole.tanuki.type, hole.tanuki.popProgress, hole.tanuki.wobbleTime);
     }
-
     drawHoleFront(hole);
   }
 
   drawParticles();
 
-  // Level up flash
   if (levelUpAnim > 0) {
     ctx.globalAlpha = levelUpAnim * 0.15;
     ctx.fillStyle = '#FFD700';
@@ -1305,9 +1371,25 @@ function loop(timestamp) {
     ctx.globalAlpha = 1;
   }
 
+  // Chance time remaining bar
+  if (chanceTimeActive) {
+    const barW = canvas.width * 0.6;
+    const barH = 8;
+    const barX = (canvas.width - barW) / 2;
+    const barY = 55;
+    const ratio = chanceTime / CHANCE_DURATION;
+    ctx.fillStyle = 'rgba(0,0,0,0.4)';
+    ctx.fillRect(barX, barY, barW, barH);
+    const grad = ctx.createLinearGradient(barX, 0, barX + barW * ratio, 0);
+    grad.addColorStop(0, '#FFD700');
+    grad.addColorStop(1, '#ff6600');
+    ctx.fillStyle = grad;
+    ctx.fillRect(barX, barY, barW * ratio, barH);
+  }
+
   ctx.restore();
 
-  if (state === State.PLAYING || state === State.RESULT) {
+  if (state === State.PLAYING || state === State.RESULT || state === State.SET_RESULT) {
     requestAnimationFrame(loop);
   }
 }
@@ -1319,7 +1401,6 @@ function animateTitle(timestamp) {
   const dt = Math.min((timestamp - lastTime) / 1000, 0.05);
   lastTime = timestamp;
 
-  // Randomly pop tanuki for decoration
   if (Math.random() < 0.02) {
     const available = holes.filter(h => h.tanuki === null);
     if (available.length > 0) {
@@ -1327,22 +1408,17 @@ function animateTitle(timestamp) {
       const types = [TANUKI_TYPES.NORMAL, TANUKI_TYPES.GOLDEN, TANUKI_TYPES.NORMAL, TANUKI_TYPES.NORMAL];
       hole.tanuki = {
         type: types[Math.floor(Math.random() * types.length)],
-        popProgress: 0,
-        phase: 'rising',
+        popProgress: 0, phase: 'rising',
         stayDuration: 1.5 + Math.random(),
-        stayTimer: 0,
-        wobbleTime: Math.random() * 100,
-        hit: false,
+        stayTimer: 0, wobbleTime: Math.random() * 100, hit: false,
       };
     }
   }
 
-  // Update demo tanuki
   for (const hole of holes) {
     if (!hole.tanuki) continue;
     const t = hole.tanuki;
     t.wobbleTime += dt;
-
     switch (t.phase) {
       case 'rising':
         t.popProgress += dt * 3;
@@ -1360,7 +1436,6 @@ function animateTitle(timestamp) {
   }
 
   updateParticles(dt);
-
   drawBackground();
 
   const sortedHoles = [...holes].sort((a, b) => a.y - b.y);
@@ -1371,7 +1446,6 @@ function animateTitle(timestamp) {
     }
     drawHoleFront(hole);
   }
-
   drawParticles();
 
   requestAnimationFrame(animateTitle);
@@ -1379,13 +1453,12 @@ function animateTitle(timestamp) {
 
 // ===== Init =====
 function init() {
-  // Show best score on title
   if (bestScore > 0) {
     document.getElementById('message-sub').innerHTML =
       `穴から出てくるたぬきを叩け！<br><span style="color:#ff4444">赤く光る「ニセモノ」は叩くな！</span><br>` +
+      `<span style="color:#88ffaa">★マークのアイテムでチャンスタイム！</span><br>` +
       `<span style="color:#FFD700;font-size:0.8em">ベスト: ${bestScore} 点</span>`;
   }
-
   requestAnimationFrame(animateTitle);
 }
 
