@@ -1,0 +1,1482 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>たぬきっち 🦝 たぬき育成ゲーム</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: #1a1a2e;
+  font-family: 'Segoe UI', 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+  user-select: none;
+  -webkit-user-select: none;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100dvh;
+  overflow: hidden;
+}
+
+#game-container {
+  width: 360px;
+  max-width: 100vw;
+  background: #f0e6d3;
+  border-radius: 32px;
+  border: 6px solid #8B7355;
+  box-shadow: 0 0 40px rgba(139,115,85,0.4), inset 0 0 20px rgba(0,0,0,0.05);
+  overflow: hidden;
+  position: relative;
+}
+
+/* ===== ヘッダー ===== */
+#header {
+  background: linear-gradient(135deg, #6B8E6B, #5A7A5A);
+  padding: 10px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 3px solid #4A6A4A;
+}
+
+#header h1 {
+  font-size: 18px;
+  color: #fff;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+  letter-spacing: 2px;
+}
+
+#clock {
+  font-size: 13px;
+  color: #d4ecd4;
+  font-weight: 600;
+}
+
+/* ===== ステータスバー ===== */
+#status-bar {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  padding: 10px 12px;
+  background: #e8dcc8;
+  border-bottom: 2px solid #d4c4a8;
+}
+
+.stat {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #5a4a3a;
+}
+
+.stat-icon {
+  font-size: 16px;
+  width: 22px;
+  text-align: center;
+}
+
+.stat-label {
+  min-width: 40px;
+  font-weight: 600;
+}
+
+.stat-bar-outer {
+  flex: 1;
+  height: 10px;
+  background: #c8b898;
+  border-radius: 5px;
+  overflow: hidden;
+  border: 1px solid #b0a080;
+}
+
+.stat-bar-inner {
+  height: 100%;
+  border-radius: 5px;
+  transition: width 0.5s ease, background 0.3s ease;
+}
+
+.stat-bar-inner.hunger { background: linear-gradient(90deg, #ff9966, #ff6633); }
+.stat-bar-inner.happy { background: linear-gradient(90deg, #ffcc33, #ff9933); }
+.stat-bar-inner.energy { background: linear-gradient(90deg, #66cc66, #339933); }
+.stat-bar-inner.clean { background: linear-gradient(90deg, #66ccff, #3399ff); }
+
+.stat-bar-inner.low { background: linear-gradient(90deg, #ff4444, #cc0000) !important; }
+
+/* ===== メイン画面 ===== */
+#main-screen {
+  height: 300px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* 背景シーン */
+#scene {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+
+#scene.day {
+  background: linear-gradient(180deg, #87CEEB 0%, #B0E0FF 40%, #90EE90 70%, #60C060 100%);
+}
+
+#scene.evening {
+  background: linear-gradient(180deg, #FF8C42 0%, #FFB347 30%, #C7956D 60%, #6B8E6B 100%);
+}
+
+#scene.night {
+  background: linear-gradient(180deg, #0f0c29 0%, #302b63 40%, #24243e 70%, #1a3a2a 100%);
+}
+
+/* 雲 */
+.cloud {
+  position: absolute;
+  font-size: 30px;
+  opacity: 0.7;
+  animation: floatCloud 20s linear infinite;
+}
+
+.cloud:nth-child(1) { top: 10%; animation-delay: 0s; animation-duration: 25s; }
+.cloud:nth-child(2) { top: 20%; animation-delay: -8s; animation-duration: 30s; font-size: 24px; }
+.cloud:nth-child(3) { top: 5%; animation-delay: -15s; animation-duration: 22s; font-size: 20px; }
+
+@keyframes floatCloud {
+  from { left: -60px; }
+  to { left: calc(100% + 60px); }
+}
+
+/* 星（夜用） */
+.star {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  background: #fff;
+  border-radius: 50%;
+  animation: twinkle 2s ease-in-out infinite alternate;
+}
+
+@keyframes twinkle {
+  from { opacity: 0.3; }
+  to { opacity: 1; }
+}
+
+/* 地面 */
+#ground {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  height: 30%;
+}
+
+#scene.day #ground { background: linear-gradient(180deg, #7BC67B, #5AA55A); }
+#scene.evening #ground { background: linear-gradient(180deg, #6B8E6B, #4A6A4A); }
+#scene.night #ground { background: linear-gradient(180deg, #2a4a2a, #1a3a1a); }
+
+/* たぬきキャラ */
+#tanuki-wrapper {
+  position: absolute;
+  bottom: 22%;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+  z-index: 10;
+  cursor: pointer;
+}
+
+#tanuki-wrapper:active {
+  transform: translateX(-50%) scale(0.95);
+}
+
+#tanuki {
+  font-size: 80px;
+  line-height: 1;
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
+  transition: transform 0.3s ease;
+}
+
+#tanuki.bounce {
+  animation: bounce 0.5s ease;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-20px); }
+}
+
+#tanuki.sleep {
+  animation: sleeping 2s ease-in-out infinite;
+}
+
+@keyframes sleeping {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(3px) rotate(-5deg); }
+}
+
+#tanuki.happy-dance {
+  animation: happyDance 0.4s ease infinite;
+}
+
+@keyframes happyDance {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  25% { transform: translateY(-10px) rotate(5deg); }
+  75% { transform: translateY(-10px) rotate(-5deg); }
+}
+
+#tanuki.eating {
+  animation: eating 0.3s ease infinite;
+}
+
+@keyframes eating {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+#tanuki.bathing {
+  animation: bathing 0.5s ease infinite;
+}
+
+@keyframes bathing {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-5px) rotate(3deg); }
+}
+
+/* 名前表示 */
+#tanuki-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+  margin-top: 4px;
+}
+
+/* 年齢表示 */
+#tanuki-age {
+  font-size: 11px;
+  color: #e0e0e0;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+}
+
+/* 吹き出し */
+#speech-bubble {
+  position: absolute;
+  top: -50px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #fff;
+  border-radius: 16px;
+  padding: 6px 14px;
+  font-size: 13px;
+  color: #333;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+#speech-bubble::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 8px solid #fff;
+}
+
+#speech-bubble.show {
+  opacity: 1;
+}
+
+/* エフェクト */
+.float-effect {
+  position: absolute;
+  font-size: 24px;
+  pointer-events: none;
+  animation: floatUp 1.5s ease-out forwards;
+  z-index: 20;
+}
+
+@keyframes floatUp {
+  0% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-80px) scale(0.5); }
+}
+
+/* Zzz エフェクト */
+.zzz-effect {
+  position: absolute;
+  font-size: 20px;
+  pointer-events: none;
+  animation: zzzFloat 2s ease-out forwards;
+  z-index: 20;
+  color: #fff;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+}
+
+@keyframes zzzFloat {
+  0% { opacity: 1; transform: translate(0, 0) scale(0.8); }
+  100% { opacity: 0; transform: translate(30px, -60px) scale(1.2); }
+}
+
+/* ===== 情報バー ===== */
+#info-bar {
+  background: #e0d4be;
+  padding: 6px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  color: #6a5a4a;
+  border-top: 2px solid #d4c4a8;
+  border-bottom: 2px solid #d4c4a8;
+}
+
+#stage-display {
+  font-weight: 700;
+  color: #8B6914;
+}
+
+#mood-display {
+  font-size: 14px;
+}
+
+/* ===== ボタンエリア ===== */
+#action-buttons {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  padding: 12px;
+  background: #e8dcc8;
+}
+
+.action-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 10px 4px;
+  border: 2px solid #c8b898;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #fff8ee, #f0e4cc);
+  font-size: 11px;
+  color: #5a4a3a;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.action-btn:active {
+  transform: scale(0.93);
+  background: linear-gradient(180deg, #f0e4cc, #e0d4b8);
+}
+
+.action-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.action-btn .btn-icon {
+  font-size: 26px;
+}
+
+/* ===== 下部ボタン ===== */
+#bottom-buttons {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  padding: 8px 12px 12px;
+  background: #e8dcc8;
+  border-bottom-left-radius: 26px;
+  border-bottom-right-radius: 26px;
+}
+
+.bottom-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 4px;
+  border: 2px solid #b8a888;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #d4c8ae, #c4b89e);
+  font-size: 10px;
+  color: #5a4a3a;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.bottom-btn:active {
+  transform: scale(0.93);
+}
+
+.bottom-btn .btn-icon {
+  font-size: 18px;
+}
+
+/* ===== モーダル ===== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 100;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.modal-overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.modal {
+  background: #f5eed8;
+  border-radius: 20px;
+  border: 4px solid #8B7355;
+  padding: 24px;
+  width: 320px;
+  max-width: 90vw;
+  text-align: center;
+  transform: scale(0.8);
+  transition: transform 0.3s ease;
+}
+
+.modal-overlay.show .modal {
+  transform: scale(1);
+}
+
+.modal h2 {
+  font-size: 20px;
+  color: #5a4a3a;
+  margin-bottom: 16px;
+}
+
+.modal p {
+  font-size: 14px;
+  color: #6a5a4a;
+  margin-bottom: 12px;
+  line-height: 1.6;
+}
+
+.modal-btn {
+  display: inline-block;
+  padding: 10px 28px;
+  margin: 6px;
+  border: 2px solid #8B7355;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #fff8ee, #f0e4cc);
+  font-size: 14px;
+  font-weight: 700;
+  color: #5a4a3a;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.modal-btn:active {
+  transform: scale(0.95);
+}
+
+.modal-btn.primary {
+  background: linear-gradient(180deg, #7BC67B, #5AA55A);
+  color: #fff;
+  border-color: #4A8A4A;
+}
+
+/* 名前入力 */
+.modal input[type="text"] {
+  width: 100%;
+  padding: 10px 14px;
+  border: 2px solid #c8b898;
+  border-radius: 10px;
+  font-size: 16px;
+  text-align: center;
+  background: #fff;
+  color: #333;
+  margin-bottom: 16px;
+  outline: none;
+}
+
+.modal input[type="text"]:focus {
+  border-color: #8B7355;
+}
+
+/* ===== ミニゲーム ===== */
+#minigame-area {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 50;
+}
+
+#minigame-area.show {
+  display: flex;
+}
+
+#minigame-title {
+  font-size: 18px;
+  color: #fff;
+  margin-bottom: 16px;
+  font-weight: 700;
+}
+
+#minigame-instruction {
+  font-size: 13px;
+  color: #ccc;
+  margin-bottom: 20px;
+}
+
+#minigame-content {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.mg-card {
+  width: 70px;
+  height: 70px;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #7B6B5B, #5A4A3A);
+  border: 3px solid #8B7B6B;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 32px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.mg-card.flipped {
+  background: linear-gradient(180deg, #fff8ee, #f0e4cc);
+  border-color: #FFD700;
+  transform: rotateY(180deg);
+}
+
+.mg-card.matched {
+  background: linear-gradient(180deg, #90EE90, #60C060);
+  border-color: #4AA54A;
+  transform: scale(0.9);
+  opacity: 0.7;
+}
+
+#minigame-result {
+  font-size: 16px;
+  color: #FFD700;
+  font-weight: 700;
+  min-height: 24px;
+}
+
+/* ===== お知らせアイコン ===== */
+.alert-icon {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 28px;
+  animation: alertPulse 1s ease-in-out infinite;
+  z-index: 15;
+}
+
+@keyframes alertPulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.2); opacity: 0.7; }
+}
+
+/* ===== 成長演出 ===== */
+#evolution-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(255,255,255,0.95);
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 60;
+  animation: fadeIn 0.5s ease;
+}
+
+#evolution-overlay.show {
+  display: flex;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+#evolution-overlay .evo-text {
+  font-size: 20px;
+  color: #8B6914;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+#evolution-overlay .evo-tanuki {
+  font-size: 100px;
+  animation: evoPop 1s ease;
+}
+
+@keyframes evoPop {
+  0% { transform: scale(0); opacity: 0; }
+  60% { transform: scale(1.3); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+#evolution-overlay .evo-stage {
+  font-size: 16px;
+  color: #5a4a3a;
+  margin-top: 8px;
+}
+
+#evolution-overlay .evo-close {
+  margin-top: 20px;
+}
+
+/* ===== 図鑑モーダル ===== */
+.zukan-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.zukan-item {
+  background: #fff;
+  border-radius: 12px;
+  padding: 10px;
+  border: 2px solid #e0d4be;
+  text-align: center;
+}
+
+.zukan-item.locked {
+  opacity: 0.4;
+}
+
+.zukan-item .z-icon {
+  font-size: 36px;
+}
+
+.zukan-item .z-name {
+  font-size: 11px;
+  color: #5a4a3a;
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+/* ===== レスポンシブ ===== */
+@media (max-height: 700px) {
+  #main-screen { height: 240px; }
+  #tanuki { font-size: 64px; }
+}
+
+@media (max-height: 600px) {
+  #main-screen { height: 200px; }
+  #tanuki { font-size: 56px; }
+}
+</style>
+</head>
+<body>
+
+<div id="game-container">
+  <!-- ヘッダー -->
+  <div id="header">
+    <h1>🦝 たぬきっち</h1>
+    <div id="clock">00:00</div>
+  </div>
+
+  <!-- ステータスバー -->
+  <div id="status-bar">
+    <div class="stat">
+      <span class="stat-icon">🍙</span>
+      <span class="stat-label">おなか</span>
+      <div class="stat-bar-outer"><div class="stat-bar-inner hunger" id="bar-hunger" style="width:80%"></div></div>
+    </div>
+    <div class="stat">
+      <span class="stat-icon">😊</span>
+      <span class="stat-label">きもち</span>
+      <div class="stat-bar-outer"><div class="stat-bar-inner happy" id="bar-happy" style="width:80%"></div></div>
+    </div>
+    <div class="stat">
+      <span class="stat-icon">⚡</span>
+      <span class="stat-label">げんき</span>
+      <div class="stat-bar-outer"><div class="stat-bar-inner energy" id="bar-energy" style="width:80%"></div></div>
+    </div>
+    <div class="stat">
+      <span class="stat-icon">✨</span>
+      <span class="stat-label">きれい</span>
+      <div class="stat-bar-outer"><div class="stat-bar-inner clean" id="bar-clean" style="width:80%"></div></div>
+    </div>
+  </div>
+
+  <!-- メイン画面 -->
+  <div id="main-screen">
+    <div id="scene" class="day">
+      <div class="cloud">☁️</div>
+      <div class="cloud">☁️</div>
+      <div class="cloud">☁️</div>
+      <div id="ground"></div>
+    </div>
+
+    <div id="tanuki-wrapper">
+      <div id="speech-bubble"></div>
+      <div id="tanuki">🦝</div>
+      <div id="tanuki-name">たぬきっち</div>
+      <div id="tanuki-age">0さい</div>
+    </div>
+
+    <!-- ミニゲーム -->
+    <div id="minigame-area">
+      <div id="minigame-title"></div>
+      <div id="minigame-instruction"></div>
+      <div id="minigame-content"></div>
+      <div id="minigame-result"></div>
+    </div>
+
+    <!-- 成長演出 -->
+    <div id="evolution-overlay">
+      <div class="evo-text">おめでとう！せいちょうしたよ！</div>
+      <div class="evo-tanuki" id="evo-tanuki-icon"></div>
+      <div class="evo-stage" id="evo-stage-text"></div>
+      <button class="modal-btn primary evo-close" onclick="closeEvolution()">やったー！</button>
+    </div>
+  </div>
+
+  <!-- 情報バー -->
+  <div id="info-bar">
+    <span id="stage-display">🥚 たまご</span>
+    <span id="mood-display">😊</span>
+    <span id="coin-display">🪙 0</span>
+  </div>
+
+  <!-- アクションボタン -->
+  <div id="action-buttons">
+    <button class="action-btn" onclick="doFeed()" id="btn-feed">
+      <span class="btn-icon">🍙</span>
+      ごはん
+    </button>
+    <button class="action-btn" onclick="doPlay()" id="btn-play">
+      <span class="btn-icon">🎮</span>
+      あそぶ
+    </button>
+    <button class="action-btn" onclick="doSleep()" id="btn-sleep">
+      <span class="btn-icon">💤</span>
+      ねる
+    </button>
+    <button class="action-btn" onclick="doBath()" id="btn-bath">
+      <span class="btn-icon">🛁</span>
+      おふろ
+    </button>
+  </div>
+
+  <!-- 下部ボタン -->
+  <div id="bottom-buttons">
+    <button class="bottom-btn" onclick="doSnack()">
+      <span class="btn-icon">🍡</span>
+      おやつ
+    </button>
+    <button class="bottom-btn" onclick="doMedicine()">
+      <span class="btn-icon">💊</span>
+      くすり
+    </button>
+    <button class="bottom-btn" onclick="showZukan()">
+      <span class="btn-icon">📖</span>
+      ずかん
+    </button>
+    <button class="bottom-btn" onclick="showStatus()">
+      <span class="btn-icon">📊</span>
+      じょうほう
+    </button>
+  </div>
+</div>
+
+<!-- 名前入力モーダル -->
+<div class="modal-overlay" id="name-modal">
+  <div class="modal">
+    <h2>🦝 たぬきっちが うまれたよ！</h2>
+    <p>なまえをつけてあげてね</p>
+    <input type="text" id="name-input" placeholder="なまえ（8もじまで）" maxlength="8">
+    <br>
+    <button class="modal-btn primary" onclick="setName()">けってい</button>
+  </div>
+</div>
+
+<!-- 図鑑モーダル -->
+<div class="modal-overlay" id="zukan-modal">
+  <div class="modal">
+    <h2>📖 せいちょうずかん</h2>
+    <div class="zukan-grid" id="zukan-grid"></div>
+    <button class="modal-btn" onclick="closeZukan()">とじる</button>
+  </div>
+</div>
+
+<!-- ステータスモーダル -->
+<div class="modal-overlay" id="status-modal">
+  <div class="modal">
+    <h2>📊 じょうほう</h2>
+    <div id="status-detail"></div>
+    <br>
+    <button class="modal-btn" onclick="closeStatus()">とじる</button>
+    <button class="modal-btn" style="color:#cc4444; border-color:#cc4444;" onclick="confirmReset()">リセット</button>
+  </div>
+</div>
+
+<script>
+// ===== ゲームステート =====
+const STAGES = [
+  { name: 'たまご',       icon: '🥚', ageReq: 0,  moodReq: 0 },
+  { name: 'あかちゃん',   icon: '🦝', ageReq: 1,  moodReq: 0 },
+  { name: 'こだぬき',     icon: '🦝', ageReq: 3,  moodReq: 30 },
+  { name: 'わかだぬき',   icon: '🦝', ageReq: 7,  moodReq: 50 },
+  { name: 'おとなたぬき', icon: '🦝', ageReq: 14, moodReq: 60 },
+  { name: 'でんせつたぬき', icon: '🦝', ageReq: 30, moodReq: 80 },
+];
+
+// たぬきの表情（成長段階ごとに変わる）
+const TANUKI_FACES = {
+  0: { normal: '🥚', happy: '🥚', sad: '🥚', sleep: '🥚', sick: '🥚' },
+  1: { normal: '🦝', happy: '😆', sad: '😢', sleep: '😴', sick: '🤒' },
+  2: { normal: '🦝', happy: '😄', sad: '😿', sleep: '😴', sick: '🤒' },
+  3: { normal: '🦝', happy: '🥰', sad: '😢', sleep: '😴', sick: '🤒' },
+  4: { normal: '🦝', happy: '🤩', sad: '😞', sleep: '😴', sick: '🤒' },
+  5: { normal: '🦝', happy: '✨🦝✨', sad: '😢', sleep: '💫😴💫', sick: '🤒' },
+};
+
+const FOODS = [
+  { name: 'おにぎり', icon: '🍙', hunger: 20, happy: 5 },
+  { name: 'りんご',   icon: '🍎', hunger: 15, happy: 8 },
+  { name: 'おさかな', icon: '🐟', hunger: 25, happy: 10 },
+];
+
+const SNACKS = [
+  { name: 'だんご',   icon: '🍡', hunger: 8,  happy: 15 },
+  { name: 'おまんじゅう', icon: '🟤', hunger: 10, happy: 12 },
+];
+
+const MESSAGES = {
+  hungry: ['おなかすいたよ〜', 'ごはんまだ？', 'ぐうぅ〜'],
+  happy:  ['うれしいな♪', 'だいすき！', 'たのしいね！'],
+  sad:    ['つまんないよ…', 'あそんで〜', 'さみしいな…'],
+  tired:  ['ねむいよ〜', 'zzz…', 'おやすみ…'],
+  dirty:  ['きたないよ〜', 'おふろはいりたい', 'むずむず…'],
+  sick:   ['きもちわるい…', 'くすりちょうだい…', 'うう…'],
+  pet:    ['きもちいい♪', 'なでなで〜♪', 'えへへ♪', 'もっと〜♪'],
+  egg:    ['…もぞもぞ…', '…ぴくっ…', '…あったかい…'],
+};
+
+let state = {
+  name: 'たぬきっち',
+  hunger: 80,
+  happy: 80,
+  energy: 80,
+  clean: 80,
+  age: 0,       // ゲーム内日数
+  stage: 0,
+  coins: 0,
+  totalHappy: 0,
+  isSleeping: false,
+  isSick: false,
+  lastUpdate: Date.now(),
+  born: Date.now(),
+  unlockedStages: [0],
+  actionCooldown: false,
+  gameSpeed: 1,       // 1日 = リアル2分
+};
+
+const TICK_INTERVAL = 1000;            // 1秒ごとに更新
+const DAY_MS = 2 * 60 * 1000;         // 2分 = 1日
+const DECAY_PER_TICK = 0.15;           // 毎秒の減少量
+
+// ===== DOM要素 =====
+const $ = id => document.getElementById(id);
+const barHunger = $('bar-hunger');
+const barHappy  = $('bar-happy');
+const barEnergy = $('bar-energy');
+const barClean  = $('bar-clean');
+const tanukiEl  = $('tanuki');
+const tanukiWrapper = $('tanuki-wrapper');
+const speechBubble = $('speech-bubble');
+const sceneEl   = $('scene');
+const clockEl   = $('clock');
+const stageDisplay = $('stage-display');
+const moodDisplay  = $('mood-display');
+const coinDisplay  = $('coin-display');
+
+// ===== 初期化 =====
+function init() {
+  loadState();
+
+  if (state.age === 0 && state.stage === 0 && state.name === 'たぬきっち') {
+    // 新規ゲーム
+    $('name-modal').classList.add('show');
+    setTimeout(() => $('name-input').focus(), 300);
+  }
+
+  // たぬきをタップで撫でる
+  tanukiWrapper.addEventListener('click', petTanuki);
+  tanukiWrapper.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    petTanuki();
+  }, { passive: false });
+
+  // ゲームループ開始
+  setInterval(gameTick, TICK_INTERVAL);
+  updateDisplay();
+  updateScene();
+}
+
+function setName() {
+  const input = $('name-input').value.trim();
+  if (input) state.name = input;
+  $('name-modal').classList.remove('show');
+  $('tanuki-name').textContent = state.name;
+
+  // たまごから孵化演出
+  setTimeout(() => {
+    evolve(1);
+  }, 2000);
+
+  saveState();
+}
+
+// ===== ゲームティック =====
+function gameTick() {
+  const now = Date.now();
+
+  if (state.isSleeping) {
+    // 寝ている間はエネルギー回復、他は緩やかに減少
+    state.energy = Math.min(100, state.energy + 0.3);
+    state.hunger = Math.max(0, state.hunger - DECAY_PER_TICK * 0.3);
+    state.clean  = Math.max(0, state.clean - DECAY_PER_TICK * 0.1);
+
+    // Zzz演出
+    if (Math.random() < 0.05) {
+      spawnZzz();
+    }
+
+    // エネルギー満タンで自動起床
+    if (state.energy >= 100) {
+      wakeUp();
+    }
+  } else {
+    // 通常時のステータス減少
+    state.hunger = Math.max(0, state.hunger - DECAY_PER_TICK);
+    state.happy  = Math.max(0, state.happy - DECAY_PER_TICK * 0.5);
+    state.energy = Math.max(0, state.energy - DECAY_PER_TICK * 0.4);
+    state.clean  = Math.max(0, state.clean - DECAY_PER_TICK * 0.3);
+  }
+
+  // 病気判定
+  if (!state.isSick && (state.hunger < 10 || state.clean < 10) && Math.random() < 0.01) {
+    state.isSick = true;
+    showSpeech(pickRandom(MESSAGES.sick));
+  }
+
+  // 年齢更新
+  const elapsed = now - state.born;
+  const newAge = Math.floor(elapsed / DAY_MS);
+  if (newAge > state.age) {
+    state.age = newAge;
+    state.coins += 5;
+    checkEvolution();
+  }
+
+  // ランダムメッセージ
+  if (Math.random() < 0.005 && !state.isSleeping) {
+    showRandomMessage();
+  }
+
+  // 幸福度の蓄積（成長判定用）
+  state.totalHappy += state.happy * 0.001;
+
+  state.lastUpdate = now;
+  updateDisplay();
+  saveState();
+}
+
+// ===== ステータス更新 =====
+function updateDisplay() {
+  // バー更新
+  updateBar(barHunger, state.hunger, 'hunger');
+  updateBar(barHappy, state.happy, 'happy');
+  updateBar(barEnergy, state.energy, 'energy');
+  updateBar(barClean, state.clean, 'clean');
+
+  // たぬき表情
+  updateTanukiFace();
+
+  // 名前・年齢
+  $('tanuki-name').textContent = state.name;
+  $('tanuki-age').textContent = state.age + 'にちめ';
+
+  // ステージ
+  const s = STAGES[state.stage];
+  stageDisplay.textContent = s.icon + ' ' + s.name;
+
+  // 気分
+  const avg = (state.hunger + state.happy + state.energy + state.clean) / 4;
+  if (state.isSick) {
+    moodDisplay.textContent = '🤒';
+  } else if (avg >= 70) {
+    moodDisplay.textContent = '😊';
+  } else if (avg >= 40) {
+    moodDisplay.textContent = '😐';
+  } else {
+    moodDisplay.textContent = '😟';
+  }
+
+  // コイン
+  coinDisplay.textContent = '🪙 ' + state.coins;
+
+  // 時計
+  const gameMinutes = Math.floor((Date.now() - state.born) % DAY_MS / (DAY_MS / 24 / 60));
+  const h = Math.floor(gameMinutes / 60) % 24;
+  const m = gameMinutes % 60;
+  clockEl.textContent = String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+
+  // 背景シーン
+  updateScene();
+}
+
+function updateBar(el, value, cls) {
+  el.style.width = value + '%';
+  el.classList.toggle('low', value < 25);
+}
+
+function updateScene() {
+  const gameMinutes = Math.floor((Date.now() - state.born) % DAY_MS / (DAY_MS / 24 / 60));
+  const h = Math.floor(gameMinutes / 60) % 24;
+
+  sceneEl.className = '';
+  if (h >= 6 && h < 17) {
+    sceneEl.classList.add('day');
+  } else if (h >= 17 && h < 20) {
+    sceneEl.classList.add('evening');
+  } else {
+    sceneEl.classList.add('night');
+    addStars();
+  }
+}
+
+function addStars() {
+  if (sceneEl.querySelector('.star')) return;
+  for (let i = 0; i < 15; i++) {
+    const star = document.createElement('div');
+    star.className = 'star';
+    star.style.left = Math.random() * 100 + '%';
+    star.style.top = Math.random() * 50 + '%';
+    star.style.animationDelay = Math.random() * 2 + 's';
+    sceneEl.appendChild(star);
+  }
+}
+
+function updateTanukiFace() {
+  const faces = TANUKI_FACES[Math.min(state.stage, 5)];
+  if (state.isSleeping) {
+    tanukiEl.textContent = faces.sleep;
+  } else if (state.isSick) {
+    tanukiEl.textContent = faces.sick;
+  } else if (state.happy >= 70) {
+    tanukiEl.textContent = faces.happy;
+  } else if (state.happy < 30 || state.hunger < 20) {
+    tanukiEl.textContent = faces.sad;
+  } else {
+    tanukiEl.textContent = faces.normal;
+  }
+}
+
+// ===== アクション =====
+function startCooldown(duration = 1500) {
+  if (state.actionCooldown) return false;
+  state.actionCooldown = true;
+  const btns = document.querySelectorAll('.action-btn, .bottom-btn');
+  btns.forEach(b => b.disabled = true);
+  setTimeout(() => {
+    state.actionCooldown = false;
+    btns.forEach(b => b.disabled = false);
+  }, duration);
+  return true;
+}
+
+function doFeed() {
+  if (state.isSleeping || state.stage === 0) return;
+  if (!startCooldown(2000)) return;
+
+  const food = pickRandom(FOODS);
+  state.hunger = Math.min(100, state.hunger + food.hunger);
+  state.happy  = Math.min(100, state.happy + food.happy);
+  state.coins  = Math.max(0, state.coins - 2);
+
+  tanukiEl.classList.add('eating');
+  setTimeout(() => tanukiEl.classList.remove('eating'), 1500);
+
+  spawnEffect(food.icon);
+  showSpeech(food.name + ' おいしい！');
+}
+
+function doPlay() {
+  if (state.isSleeping || state.stage === 0) return;
+  if (state.energy < 15) {
+    showSpeech('つかれて あそべないよ…');
+    return;
+  }
+  if (!startCooldown()) return;
+
+  startMinigame();
+}
+
+function doSleep() {
+  if (state.stage === 0) return;
+  if (!startCooldown(1000)) return;
+
+  if (state.isSleeping) {
+    wakeUp();
+  } else {
+    state.isSleeping = true;
+    tanukiEl.classList.add('sleep');
+    tanukiEl.classList.remove('bounce', 'happy-dance', 'eating', 'bathing');
+    showSpeech('おやすみなさい… 💤');
+  }
+}
+
+function wakeUp() {
+  state.isSleeping = false;
+  tanukiEl.classList.remove('sleep');
+  showSpeech('おはよう！ すっきり〜♪');
+  tanukiEl.classList.add('bounce');
+  setTimeout(() => tanukiEl.classList.remove('bounce'), 500);
+
+  // 星を消す
+  sceneEl.querySelectorAll('.star').forEach(s => s.remove());
+}
+
+function doBath() {
+  if (state.isSleeping || state.stage === 0) return;
+  if (!startCooldown(2500)) return;
+
+  state.clean = Math.min(100, state.clean + 40);
+  state.happy = Math.min(100, state.happy + 5);
+
+  tanukiEl.classList.add('bathing');
+  setTimeout(() => tanukiEl.classList.remove('bathing'), 2000);
+
+  spawnEffect('🫧');
+  setTimeout(() => spawnEffect('🫧'), 300);
+  setTimeout(() => spawnEffect('🫧'), 600);
+  showSpeech('きもちいい〜♪ ぴかぴか！');
+}
+
+function doSnack() {
+  if (state.isSleeping || state.stage === 0) return;
+  if (!startCooldown(1500)) return;
+
+  const snack = pickRandom(SNACKS);
+  state.hunger = Math.min(100, state.hunger + snack.hunger);
+  state.happy  = Math.min(100, state.happy + snack.happy);
+  state.clean  = Math.max(0, state.clean - 3);
+
+  tanukiEl.classList.add('eating');
+  setTimeout(() => tanukiEl.classList.remove('eating'), 1200);
+
+  spawnEffect(snack.icon);
+  showSpeech(snack.name + ' うまうま♪');
+}
+
+function doMedicine() {
+  if (state.isSleeping || state.stage === 0) return;
+  if (!state.isSick) {
+    showSpeech('げんきだよ！');
+    return;
+  }
+  if (!startCooldown(2000)) return;
+
+  state.isSick = false;
+  state.hunger = Math.min(100, state.hunger + 10);
+  state.energy = Math.min(100, state.energy + 10);
+
+  spawnEffect('💊');
+  showSpeech('くすり のんだ！ げんきになったよ♪');
+}
+
+function petTanuki() {
+  if (state.isSleeping || state.stage === 0) return;
+
+  state.happy = Math.min(100, state.happy + 3);
+  tanukiEl.classList.add('bounce');
+  setTimeout(() => tanukiEl.classList.remove('bounce'), 500);
+
+  spawnEffect('💕');
+  showSpeech(pickRandom(MESSAGES.pet));
+}
+
+// ===== ミニゲーム（神経衰弱） =====
+let mgCards = [];
+let mgFlipped = [];
+let mgMatched = 0;
+
+function startMinigame() {
+  const area = $('minigame-area');
+  const content = $('minigame-content');
+  const result = $('minigame-result');
+
+  $('minigame-title').textContent = '🎴 きおくゲーム';
+  $('minigame-instruction').textContent = 'おなじ えもじを みつけてね！';
+  result.textContent = '';
+
+  // カードセットアップ
+  const emojis = ['🍙', '🍎', '🐟', '🍡', '🌸', '🎋'];
+  const pairs = emojis.slice(0, 4);
+  mgCards = [...pairs, ...pairs].sort(() => Math.random() - 0.5);
+  mgFlipped = [];
+  mgMatched = 0;
+
+  content.innerHTML = '';
+  mgCards.forEach((emoji, i) => {
+    const card = document.createElement('div');
+    card.className = 'mg-card';
+    card.textContent = '？';
+    card.addEventListener('click', () => flipCard(i, card, emoji));
+    content.appendChild(card);
+  });
+
+  area.classList.add('show');
+}
+
+function flipCard(index, el, emoji) {
+  if (mgFlipped.length >= 2) return;
+  if (el.classList.contains('flipped') || el.classList.contains('matched')) return;
+
+  el.textContent = emoji;
+  el.classList.add('flipped');
+  mgFlipped.push({ index, el, emoji });
+
+  if (mgFlipped.length === 2) {
+    setTimeout(checkMatch, 600);
+  }
+}
+
+function checkMatch() {
+  const [a, b] = mgFlipped;
+  if (a.emoji === b.emoji) {
+    a.el.classList.add('matched');
+    b.el.classList.add('matched');
+    mgMatched++;
+
+    if (mgMatched === 4) {
+      endMinigame(true);
+    }
+  } else {
+    a.el.textContent = '？';
+    b.el.textContent = '？';
+    a.el.classList.remove('flipped');
+    b.el.classList.remove('flipped');
+  }
+  mgFlipped = [];
+}
+
+function endMinigame(won) {
+  const result = $('minigame-result');
+  if (won) {
+    result.textContent = '🎉 すごい！ぜんぶ みつけたよ！';
+    state.happy  = Math.min(100, state.happy + 20);
+    state.energy = Math.max(0, state.energy - 10);
+    state.coins += 10;
+  } else {
+    result.textContent = 'また あそぼうね！';
+    state.happy  = Math.min(100, state.happy + 5);
+    state.energy = Math.max(0, state.energy - 5);
+  }
+
+  setTimeout(() => {
+    $('minigame-area').classList.remove('show');
+    spawnEffect('⭐');
+    showSpeech('たのしかった〜♪');
+  }, 1500);
+}
+
+// ===== 成長 =====
+function checkEvolution() {
+  const nextStage = state.stage + 1;
+  if (nextStage >= STAGES.length) return;
+
+  const req = STAGES[nextStage];
+  if (state.age >= req.ageReq) {
+    const avg = (state.hunger + state.happy + state.energy + state.clean) / 4;
+    if (avg >= req.moodReq || state.totalHappy > req.moodReq * 10) {
+      evolve(nextStage);
+    }
+  }
+}
+
+function evolve(newStage) {
+  state.stage = newStage;
+  if (!state.unlockedStages.includes(newStage)) {
+    state.unlockedStages.push(newStage);
+  }
+
+  const s = STAGES[newStage];
+  $('evo-tanuki-icon').textContent = s.icon;
+  $('evo-stage-text').textContent = '「' + s.name + '」に せいちょうした！';
+  $('evolution-overlay').classList.add('show');
+
+  state.coins += 20;
+  saveState();
+}
+
+function closeEvolution() {
+  $('evolution-overlay').classList.remove('show');
+}
+
+// ===== 吹き出し =====
+let speechTimeout;
+function showSpeech(text) {
+  speechBubble.textContent = text;
+  speechBubble.classList.add('show');
+  clearTimeout(speechTimeout);
+  speechTimeout = setTimeout(() => {
+    speechBubble.classList.remove('show');
+  }, 2500);
+}
+
+function showRandomMessage() {
+  if (state.isSick) {
+    showSpeech(pickRandom(MESSAGES.sick));
+  } else if (state.stage === 0) {
+    showSpeech(pickRandom(MESSAGES.egg));
+  } else if (state.hunger < 25) {
+    showSpeech(pickRandom(MESSAGES.hungry));
+  } else if (state.energy < 25) {
+    showSpeech(pickRandom(MESSAGES.tired));
+  } else if (state.clean < 25) {
+    showSpeech(pickRandom(MESSAGES.dirty));
+  } else if (state.happy < 30) {
+    showSpeech(pickRandom(MESSAGES.sad));
+  } else if (state.happy > 70) {
+    showSpeech(pickRandom(MESSAGES.happy));
+  }
+}
+
+// ===== エフェクト =====
+function spawnEffect(emoji) {
+  const el = document.createElement('div');
+  el.className = 'float-effect';
+  el.textContent = emoji;
+  const rect = tanukiWrapper.getBoundingClientRect();
+  const screen = $('main-screen').getBoundingClientRect();
+  el.style.left = (rect.left - screen.left + rect.width / 2 - 12 + (Math.random() - 0.5) * 40) + 'px';
+  el.style.top = (rect.top - screen.top + (Math.random() - 0.5) * 20) + 'px';
+  $('main-screen').appendChild(el);
+  setTimeout(() => el.remove(), 1500);
+}
+
+function spawnZzz() {
+  const el = document.createElement('div');
+  el.className = 'zzz-effect';
+  el.textContent = 'Zzz';
+  const rect = tanukiWrapper.getBoundingClientRect();
+  const screen = $('main-screen').getBoundingClientRect();
+  el.style.left = (rect.left - screen.left + rect.width / 2) + 'px';
+  el.style.top = (rect.top - screen.top - 10) + 'px';
+  $('main-screen').appendChild(el);
+  setTimeout(() => el.remove(), 2000);
+}
+
+// ===== 図鑑 =====
+function showZukan() {
+  const grid = $('zukan-grid');
+  grid.innerHTML = '';
+  STAGES.forEach((s, i) => {
+    const div = document.createElement('div');
+    const unlocked = state.unlockedStages.includes(i);
+    div.className = 'zukan-item' + (unlocked ? '' : ' locked');
+    div.innerHTML = '<div class="z-icon">' + (unlocked ? s.icon : '❓') + '</div>' +
+                    '<div class="z-name">' + (unlocked ? s.name : '？？？') + '</div>';
+    grid.appendChild(div);
+  });
+  $('zukan-modal').classList.add('show');
+}
+
+function closeZukan() {
+  $('zukan-modal').classList.remove('show');
+}
+
+// ===== ステータス詳細 =====
+function showStatus() {
+  const avg = Math.round((state.hunger + state.happy + state.energy + state.clean) / 4);
+  const detail = $('status-detail');
+  detail.innerHTML =
+    '<p>🦝 <b>' + state.name + '</b></p>' +
+    '<p>📅 ' + state.age + 'にちめ</p>' +
+    '<p>🏷️ ' + STAGES[state.stage].name + '</p>' +
+    '<p>🪙 ' + state.coins + ' コイン</p>' +
+    '<p>💯 そうごうスコア: ' + avg + '点</p>' +
+    '<p style="font-size:11px;color:#999;margin-top:8px;">1にち = リアル2ふん</p>';
+  $('status-modal').classList.add('show');
+}
+
+function closeStatus() {
+  $('status-modal').classList.remove('show');
+}
+
+function confirmReset() {
+  if (confirm('ほんとうにリセットしますか？\nすべてのデータがきえます。')) {
+    localStorage.removeItem('tanukicchi_save');
+    location.reload();
+  }
+}
+
+// ===== セーブ / ロード =====
+function saveState() {
+  try {
+    localStorage.setItem('tanukicchi_save', JSON.stringify(state));
+  } catch(e) {}
+}
+
+function loadState() {
+  try {
+    const saved = localStorage.getItem('tanukicchi_save');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      Object.assign(state, parsed);
+
+      // 離席中のステータス減少を適用
+      const elapsed = (Date.now() - state.lastUpdate) / 1000;
+      const decay = Math.min(elapsed * DECAY_PER_TICK * 0.5, 50); // 最大50まで減少
+      state.hunger = Math.max(0, state.hunger - decay);
+      state.happy  = Math.max(0, state.happy - decay * 0.5);
+      state.energy = Math.max(0, state.energy - decay * 0.3);
+      state.clean  = Math.max(0, state.clean - decay * 0.3);
+
+      // 年齢再計算
+      state.age = Math.floor((Date.now() - state.born) / DAY_MS);
+    }
+  } catch(e) {
+    localStorage.removeItem('tanukicchi_save');
+  }
+}
+
+// ===== ユーティリティ =====
+function pickRandom(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+// ===== スタート =====
+init();
+</script>
+</body>
+</html>
