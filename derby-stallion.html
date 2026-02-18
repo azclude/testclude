@@ -1,0 +1,1203 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ダービースタリオン風 競馬シミュレーション</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: #1a1a2e;
+  color: #e0e0e0;
+  font-family: 'Segoe UI', 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+#app {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+h1 {
+  text-align: center;
+  font-size: 28px;
+  color: #ffd700;
+  margin: 16px 0;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+}
+
+h2 {
+  font-size: 20px;
+  color: #ffd700;
+  margin-bottom: 12px;
+  border-bottom: 2px solid #ffd700;
+  padding-bottom: 4px;
+}
+
+.screen { display: none; }
+.screen.active { display: block; }
+
+/* カード */
+.card {
+  background: #16213e;
+  border: 1px solid #0f3460;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+
+.card:hover { border-color: #ffd700; }
+
+/* ボタン */
+.btn {
+  display: inline-block;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+
+.btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+.btn:active { transform: translateY(0); }
+
+.btn-primary { background: #ffd700; color: #1a1a2e; }
+.btn-success { background: #27ae60; color: #fff; }
+.btn-danger { background: #e74c3c; color: #fff; }
+.btn-info { background: #3498db; color: #fff; }
+.btn-secondary { background: #555; color: #fff; }
+.btn-block { display: block; width: 100%; margin-top: 8px; }
+
+/* ステータスバー */
+.stat-bar {
+  display: flex;
+  align-items: center;
+  margin: 6px 0;
+}
+
+.stat-label {
+  width: 80px;
+  font-size: 14px;
+  color: #aaa;
+}
+
+.stat-track {
+  flex: 1;
+  height: 16px;
+  background: #0a0a1a;
+  border-radius: 8px;
+  overflow: hidden;
+  margin: 0 8px;
+}
+
+.stat-fill {
+  height: 100%;
+  border-radius: 8px;
+  transition: width 0.5s ease;
+}
+
+.stat-value {
+  width: 40px;
+  text-align: right;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.stat-speed .stat-fill { background: linear-gradient(90deg, #e74c3c, #ff6b6b); }
+.stat-stamina .stat-fill { background: linear-gradient(90deg, #27ae60, #6bff6b); }
+.stat-power .stat-fill { background: linear-gradient(90deg, #3498db, #6bb5ff); }
+.stat-spirit .stat-fill { background: linear-gradient(90deg, #f39c12, #ffd700); }
+
+/* 馬選択グリッド */
+.horse-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+@media (max-width: 500px) {
+  .horse-grid { grid-template-columns: 1fr; }
+}
+
+.horse-card {
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.horse-card:hover {
+  border-color: #ffd700;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(255, 215, 0, 0.2);
+}
+
+.horse-card .horse-emoji {
+  font-size: 48px;
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.horse-card .horse-name {
+  font-size: 18px;
+  font-weight: bold;
+  text-align: center;
+  color: #ffd700;
+  margin-bottom: 8px;
+}
+
+/* トレーニングメニュー */
+.training-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.training-card {
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s;
+}
+
+.training-card:hover {
+  border-color: #ffd700;
+  transform: translateY(-2px);
+}
+
+.training-card .training-icon { font-size: 36px; margin-bottom: 4px; }
+.training-card .training-name { font-weight: bold; color: #ffd700; }
+.training-card .training-desc { font-size: 12px; color: #aaa; margin-top: 4px; }
+
+/* レース画面 */
+#race-canvas {
+  width: 100%;
+  height: 400px;
+  background: #2d5a1b;
+  border-radius: 12px;
+  border: 3px solid #1a3a0a;
+  margin-bottom: 12px;
+}
+
+/* レース情報 */
+.race-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.race-info-item {
+  background: #16213e;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.race-info-item span { color: #ffd700; font-weight: bold; }
+
+/* 結果画面 */
+.result-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 12px 0;
+}
+
+.result-table th, .result-table td {
+  padding: 10px;
+  text-align: center;
+  border-bottom: 1px solid #0f3460;
+}
+
+.result-table th {
+  background: #0f3460;
+  color: #ffd700;
+}
+
+.result-table tr:nth-child(even) { background: rgba(255,255,255,0.03); }
+.result-table .rank-1 { color: #ffd700; font-weight: bold; }
+.result-table .rank-2 { color: #c0c0c0; }
+.result-table .rank-3 { color: #cd7f32; }
+
+/* ステータス表示ヘッダー */
+.header-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #16213e;
+  padding: 12px 16px;
+  border-radius: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.header-bar .info-chip {
+  background: #0f3460;
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 14px;
+}
+
+.header-bar .info-chip span { color: #ffd700; font-weight: bold; }
+
+/* アニメーション */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.screen.active { animation: fadeIn 0.3s ease; }
+
+/* メッセージ */
+.message-box {
+  background: #0f3460;
+  border-left: 4px solid #ffd700;
+  padding: 12px 16px;
+  border-radius: 0 8px 8px 0;
+  margin: 12px 0;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* 週の表示 */
+.week-display {
+  text-align: center;
+  font-size: 14px;
+  color: #aaa;
+  margin-bottom: 8px;
+}
+
+/* 実績 */
+.trophy-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 8px 0;
+}
+
+.trophy {
+  background: #0f3460;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+}
+
+.trophy.won { background: #7a5c00; color: #ffd700; }
+
+/* 牧場画面 */
+.farm-scene {
+  text-align: center;
+  font-size: 64px;
+  padding: 20px;
+  background: linear-gradient(180deg, #87CEEB 0%, #87CEEB 50%, #90EE90 50%, #228B22 100%);
+  border-radius: 12px;
+  margin-bottom: 16px;
+  min-height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+
+/* レース選択 */
+.race-select-card {
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.race-select-card .race-name {
+  font-weight: bold;
+  color: #ffd700;
+  font-size: 16px;
+}
+
+.race-select-card .race-detail {
+  font-size: 13px;
+  color: #aaa;
+  margin-top: 2px;
+}
+
+.race-grade {
+  font-size: 14px;
+  font-weight: bold;
+  padding: 4px 10px;
+  border-radius: 8px;
+}
+
+.grade-g1 { background: #7a5c00; color: #ffd700; }
+.grade-g2 { background: #4a3a6a; color: #c0a0ff; }
+.grade-g3 { background: #2a4a2a; color: #80e080; }
+.grade-op { background: #333; color: #ccc; }
+
+/* コメント吹き出し */
+.comment-bubble {
+  background: #fff;
+  color: #333;
+  padding: 12px 16px;
+  border-radius: 16px;
+  border-bottom-left-radius: 4px;
+  margin: 12px 0;
+  font-size: 14px;
+  position: relative;
+}
+
+.comment-speaker {
+  font-size: 12px;
+  color: #888;
+  margin-bottom: 4px;
+}
+
+/* レース実況テキスト */
+#race-commentary {
+  background: #0a0a1a;
+  color: #ffd700;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  min-height: 40px;
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.condition-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 12px;
+  margin-left: 8px;
+}
+
+.condition-good { background: #27ae60; color: #fff; }
+.condition-normal { background: #f39c12; color: #fff; }
+.condition-bad { background: #e74c3c; color: #fff; }
+</style>
+</head>
+<body>
+<div id="app">
+  <h1>🏇 ダービースタリオン 🏇</h1>
+
+  <!-- ===== タイトル画面 ===== -->
+  <div id="screen-title" class="screen active">
+    <div class="farm-scene" style="font-size:80px; min-height:200px;">
+      🐴
+    </div>
+    <div class="card" style="text-align:center;">
+      <p style="font-size:18px; margin-bottom:16px;">馬を育てて、最強のダービー馬を目指せ！</p>
+      <button class="btn btn-primary btn-block" onclick="startGame()">ゲームスタート</button>
+    </div>
+  </div>
+
+  <!-- ===== 馬選択画面 ===== -->
+  <div id="screen-select" class="screen">
+    <h2>🐴 仔馬を選ぼう</h2>
+    <p style="margin-bottom:12px; color:#aaa;">牧場に4頭の仔馬が生まれました。1頭を選んで育てましょう。</p>
+    <div class="horse-grid" id="horse-grid"></div>
+  </div>
+
+  <!-- ===== メイン（育成）画面 ===== -->
+  <div id="screen-main" class="screen">
+    <div class="header-bar">
+      <div class="info-chip">🗓 <span id="hud-year">3</span>歳 <span id="hud-month">4</span>月 <span id="hud-week">1</span>週</div>
+      <div class="info-chip">💰 <span id="hud-money">2000</span>万円</div>
+      <div class="info-chip">体調: <span id="hud-condition">良好</span></div>
+    </div>
+
+    <div class="card">
+      <div style="display:flex; align-items:center; gap:12px; margin-bottom:8px;">
+        <span style="font-size:48px;">🐴</span>
+        <div>
+          <div style="font-size:20px; font-weight:bold; color:#ffd700;" id="main-horse-name"></div>
+          <div style="font-size:13px; color:#aaa;" id="main-horse-type"></div>
+        </div>
+      </div>
+      <div id="main-stats"></div>
+      <div class="trophy-list" id="main-trophies"></div>
+    </div>
+
+    <div id="trainer-comment"></div>
+
+    <h2 style="margin-top:16px;">📋 今週の行動</h2>
+
+    <div class="training-grid" id="training-menu"></div>
+
+    <button class="btn btn-info btn-block" onclick="showRaceSelect()" id="btn-race">🏁 レースに出走する</button>
+    <button class="btn btn-secondary btn-block" onclick="doRest()">😴 休養する</button>
+  </div>
+
+  <!-- ===== レース選択画面 ===== -->
+  <div id="screen-race-select" class="screen">
+    <h2>🏁 出走レース選択</h2>
+    <p style="margin-bottom:12px; color:#aaa;">今週出走できるレースを選んでください。</p>
+    <div id="race-list"></div>
+    <button class="btn btn-secondary btn-block" onclick="showScreen('screen-main')" style="margin-top:12px;">戻る</button>
+  </div>
+
+  <!-- ===== レース画面 ===== -->
+  <div id="screen-race" class="screen">
+    <div class="race-info" id="race-info-bar"></div>
+    <div id="race-commentary">レース準備中...</div>
+    <canvas id="race-canvas"></canvas>
+    <div id="race-controls" style="text-align:center;"></div>
+  </div>
+
+  <!-- ===== レース結果画面 ===== -->
+  <div id="screen-result" class="screen">
+    <h2 id="result-title">🏆 レース結果</h2>
+    <div id="result-message" class="message-box"></div>
+    <table class="result-table" id="result-table">
+      <thead><tr><th>着順</th><th>馬名</th><th>タイム</th></tr></thead>
+      <tbody id="result-body"></tbody>
+    </table>
+    <div id="result-prize" style="text-align:center; margin:12px 0;"></div>
+    <button class="btn btn-primary btn-block" onclick="afterRace()">次の週へ</button>
+  </div>
+
+  <!-- ===== ゲーム終了画面 ===== -->
+  <div id="screen-ending" class="screen">
+    <div class="farm-scene" style="min-height:160px;">🐴🏆</div>
+    <h2 style="text-align:center;">引退 - キャリア成績</h2>
+    <div class="card" id="ending-stats"></div>
+    <div class="card" id="ending-trophies"></div>
+    <button class="btn btn-primary btn-block" onclick="location.reload()">もう一度プレイ</button>
+  </div>
+</div>
+
+<script>
+// ========== ゲーム定数 ==========
+const HORSE_NAMES = [
+  'サクラフブキ', 'タケシバオー', 'ミホノブルボン', 'ナリタブライアン',
+  'トウカイテイオー', 'オグリキャップ', 'シンボリルドルフ', 'テイエムオペラオー',
+  'ディープインパクト', 'キタサンブラック', 'エルコンドルパサー', 'スペシャルウィーク',
+  'マヤノトップガン', 'サイレンススズカ', 'グラスワンダー', 'ウオッカ',
+  'ゴールドシップ', 'ジェンティルドンナ', 'ハーツクライ', 'アーモンドアイ',
+  'コントレイル', 'イクイノックス', 'リバティアイランド', 'ドゥラメンテ'
+];
+
+const RIVAL_NAMES = [
+  'テンノウメ', 'カゼノハヤテ', 'ヤマトダマシイ', 'アオゾラノカゼ',
+  'ホシノキセキ', 'ライジンオー', 'カミカゼノツバサ', 'ユメノチカラ',
+  'ミライノホシ', 'ダイチノコドウ', 'ハルカナルキボウ', 'フウウンジ',
+  'アカツキノヒカリ', 'シノビノカゲ', 'センプウマル', 'レッカノホノオ'
+];
+
+const HORSE_TYPES = [
+  { name: 'スピード型', desc: 'スピードが伸びやすい', bias: { speed: 1.4, stamina: 0.8, power: 1.0, spirit: 1.0 } },
+  { name: 'スタミナ型', desc: 'スタミナが伸びやすい', bias: { speed: 0.9, stamina: 1.4, power: 1.0, spirit: 0.9 } },
+  { name: 'パワー型', desc: 'パワーが伸びやすい', bias: { speed: 1.0, stamina: 1.0, power: 1.4, spirit: 0.8 } },
+  { name: 'バランス型', desc: '全体的にバランスが良い', bias: { speed: 1.1, stamina: 1.1, power: 1.1, spirit: 1.1 } },
+];
+
+const TRAINING_MENU = [
+  { id: 'speed', icon: '💨', name: 'スピード走', desc: 'スピード↑↑ スタミナ↑', main: 'speed', sub: 'stamina', mainVal: 8, subVal: 3 },
+  { id: 'stamina', icon: '🏃', name: '長距離走', desc: 'スタミナ↑↑ パワー↑', main: 'stamina', sub: 'power', mainVal: 8, subVal: 3 },
+  { id: 'power', icon: '💪', name: '坂路調教', desc: 'パワー↑↑ スピード↑', main: 'power', sub: 'speed', mainVal: 8, subVal: 3 },
+  { id: 'spirit', icon: '🔥', name: '併せ馬', desc: '根性↑↑ パワー↑', main: 'spirit', sub: 'power', mainVal: 8, subVal: 3 },
+];
+
+const RACE_SCHEDULE = [
+  // 3歳
+  { month: 6, week: 2, name: '新馬戦', grade: 'OP', dist: 1600, prize: 300, minStat: 0 },
+  { month: 7, week: 3, name: '未勝利戦', grade: 'OP', dist: 1800, prize: 300, minStat: 0 },
+  { month: 9, week: 2, name: 'コスモス賞', grade: 'OP', dist: 1800, prize: 400, minStat: 100 },
+  { month: 10, week: 2, name: '京都新聞杯', grade: 'G2', dist: 2200, prize: 600, minStat: 120 },
+  { month: 11, week: 4, name: '菊花賞', grade: 'G1', dist: 3000, prize: 1500, minStat: 150 },
+  { month: 12, week: 3, name: '有馬記念', grade: 'G1', dist: 2500, prize: 2000, minStat: 180 },
+  // 4歳
+  { month: 15, week: 1, name: '京都記念', grade: 'G2', dist: 2200, prize: 600, minStat: 160 },
+  { month: 16, week: 3, name: '大阪杯', grade: 'G1', dist: 2000, prize: 1500, minStat: 200 },
+  { month: 17, week: 2, name: '天皇賞(春)', grade: 'G1', dist: 3200, prize: 1800, minStat: 220 },
+  { month: 18, week: 4, name: '宝塚記念', grade: 'G1', dist: 2200, prize: 1800, minStat: 230 },
+  { month: 21, week: 2, name: '天皇賞(秋)', grade: 'G1', dist: 2000, prize: 1800, minStat: 250 },
+  { month: 22, week: 3, name: 'ジャパンカップ', grade: 'G1', dist: 2400, prize: 2500, minStat: 270 },
+  { month: 23, week: 4, name: '有馬記念', grade: 'G1', dist: 2500, prize: 3000, minStat: 280 },
+  // 5歳
+  { month: 28, week: 3, name: '大阪杯', grade: 'G1', dist: 2000, prize: 1500, minStat: 280 },
+  { month: 29, week: 2, name: '天皇賞(春)', grade: 'G1', dist: 3200, prize: 1800, minStat: 290 },
+  { month: 30, week: 4, name: '宝塚記念', grade: 'G1', dist: 2200, prize: 2000, minStat: 300 },
+  { month: 33, week: 2, name: '天皇賞(秋)', grade: 'G1', dist: 2000, prize: 2000, minStat: 310 },
+  { month: 34, week: 3, name: 'ジャパンカップ', grade: 'G1', dist: 2400, prize: 3000, minStat: 320 },
+  { month: 35, week: 4, name: '有馬記念', grade: 'G1', dist: 2500, prize: 5000, minStat: 330 },
+];
+
+const TRAINER_COMMENTS = {
+  start: [
+    'この馬はいい素質を持っていますよ。じっくり育てましょう。',
+    'まだ若いですが、将来が楽しみな馬です。',
+    'なかなかの血統ですね。大事に育てましょう。'
+  ],
+  speedUp: [
+    'いい走りをしていますね！スピードが上がりました。',
+    '脚が速くなっていますよ。この調子です！',
+  ],
+  staminaUp: [
+    'スタミナがついてきましたね。長距離もいけそうです。',
+    '粘り強さが出てきました。成長していますよ。',
+  ],
+  powerUp: [
+    'パワーがついてきました。坂路でも力強い走りです。',
+    '馬体が充実してきましたね。パワーが上がっています。',
+  ],
+  spiritUp: [
+    '闘志がみなぎっていますよ！根性がつきました。',
+    '競り合いに強くなってきましたね。',
+  ],
+  raceWin: [
+    'やりましたね！素晴らしいレースでした！',
+    '圧巻の走りでした！次のレースも期待しましょう！',
+    '見事な勝利です！この馬は本物ですよ！',
+  ],
+  raceLose: [
+    '残念でしたが、いい経験になりました。次頑張りましょう。',
+    '今回は相手が強かったですね。まだまだこれからです。',
+  ],
+  tired: [
+    '少し疲れが見えます。休養も大事ですよ。',
+    '体調が心配です。無理はさせない方がいいかもしれません。',
+  ],
+  rest: [
+    'ゆっくり休んでリフレッシュしましょう。',
+    '休養で体調が回復しましたよ。',
+  ],
+  conditionGood: [
+    '今日は調子がいいですよ！絶好調です！',
+    'コンディション抜群です！',
+  ],
+};
+
+// ========== ゲーム状態 ==========
+let game = {
+  horse: null,
+  month: 4,  // 3歳4月スタート（通算月: 4）
+  week: 1,
+  money: 2000,
+  condition: 80, // 0-100
+  fatigue: 0,    // 0-100
+  wins: 0,
+  losses: 0,
+  raceHistory: [],
+  trophies: [],
+};
+
+// ========== 画面管理 ==========
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ========== ゲーム開始 ==========
+function startGame() {
+  showScreen('screen-select');
+  generateHorses();
+}
+
+function generateHorses() {
+  const grid = document.getElementById('horse-grid');
+  grid.innerHTML = '';
+  const names = shuffle([...HORSE_NAMES]).slice(0, 4);
+  const types = shuffle([...HORSE_TYPES]);
+
+  for (let i = 0; i < 4; i++) {
+    const stats = {
+      speed: randInt(25, 50),
+      stamina: randInt(25, 50),
+      power: randInt(25, 50),
+      spirit: randInt(25, 50),
+    };
+    const horse = { name: names[i], type: types[i], stats };
+    const card = document.createElement('div');
+    card.className = 'card horse-card';
+    card.innerHTML = `
+      <div class="horse-emoji">🐴</div>
+      <div class="horse-name">${horse.name}</div>
+      <div style="font-size:13px; color:#aaa; text-align:center; margin-bottom:8px;">${horse.type.name} - ${horse.type.desc}</div>
+      ${renderStatBars(horse.stats)}
+    `;
+    card.onclick = () => selectHorse(horse);
+    grid.appendChild(card);
+  }
+}
+
+function selectHorse(horse) {
+  game.horse = horse;
+  game.month = 4;
+  game.week = 1;
+  game.money = 2000;
+  game.condition = 80;
+  game.fatigue = 0;
+  game.wins = 0;
+  game.losses = 0;
+  game.raceHistory = [];
+  game.trophies = [];
+  showMainScreen();
+  setTrainerComment(randPick(TRAINER_COMMENTS.start));
+}
+
+// ========== メイン画面 ==========
+function showMainScreen() {
+  showScreen('screen-main');
+  updateHUD();
+  updateMainHorse();
+  renderTrainingMenu();
+
+  // 引退チェック（5歳12月で引退）
+  if (getAbsoluteMonth() > 36) {
+    showEnding();
+    return;
+  }
+}
+
+function getAbsoluteMonth() {
+  return game.month;
+}
+
+function getDisplayYear() {
+  return Math.floor((game.month - 1) / 12) + 3;
+}
+
+function getDisplayMonth() {
+  return ((game.month - 1) % 12) + 1;
+}
+
+function updateHUD() {
+  document.getElementById('hud-year').textContent = getDisplayYear();
+  document.getElementById('hud-month').textContent = getDisplayMonth();
+  document.getElementById('hud-week').textContent = game.week;
+  document.getElementById('hud-money').textContent = game.money;
+
+  const condEl = document.getElementById('hud-condition');
+  if (game.condition >= 70) {
+    condEl.textContent = '絶好調';
+    condEl.className = 'condition-badge condition-good';
+  } else if (game.condition >= 40) {
+    condEl.textContent = '普通';
+    condEl.className = 'condition-badge condition-normal';
+  } else {
+    condEl.textContent = '不調';
+    condEl.className = 'condition-badge condition-bad';
+  }
+}
+
+function updateMainHorse() {
+  document.getElementById('main-horse-name').textContent = game.horse.name;
+  document.getElementById('main-horse-type').textContent = `${game.horse.type.name} / 戦績: ${game.wins}勝${game.losses}敗`;
+  document.getElementById('main-stats').innerHTML = renderStatBars(game.horse.stats);
+
+  const trophyEl = document.getElementById('main-trophies');
+  if (game.trophies.length > 0) {
+    trophyEl.innerHTML = game.trophies.map(t =>
+      `<span class="trophy won">🏆 ${t}</span>`
+    ).join('');
+  } else {
+    trophyEl.innerHTML = '<span class="trophy">まだ勝利なし</span>';
+  }
+}
+
+function renderStatBars(stats) {
+  const entries = [
+    { key: 'speed', label: 'スピード', cls: 'stat-speed' },
+    { key: 'stamina', label: 'スタミナ', cls: 'stat-stamina' },
+    { key: 'power', label: 'パワー', cls: 'stat-power' },
+    { key: 'spirit', label: '根性', cls: 'stat-spirit' },
+  ];
+  return entries.map(e => {
+    const val = Math.min(stats[e.key], 400);
+    const pct = Math.min((val / 400) * 100, 100);
+    return `
+      <div class="stat-bar ${e.cls}">
+        <span class="stat-label">${e.label}</span>
+        <div class="stat-track"><div class="stat-fill" style="width:${pct}%"></div></div>
+        <span class="stat-value">${stats[e.key]}</span>
+      </div>`;
+  }).join('');
+}
+
+function renderTrainingMenu() {
+  const menu = document.getElementById('training-menu');
+  menu.innerHTML = TRAINING_MENU.map(t => `
+    <div class="card training-card" onclick="doTraining('${t.id}')">
+      <div class="training-icon">${t.icon}</div>
+      <div class="training-name">${t.name}</div>
+      <div class="training-desc">${t.desc}</div>
+    </div>
+  `).join('');
+}
+
+// ========== トレーニング ==========
+function doTraining(type) {
+  const tr = TRAINING_MENU.find(t => t.id === type);
+  if (!tr) return;
+
+  const bias = game.horse.type.bias;
+  const condMult = game.condition >= 70 ? 1.2 : game.condition >= 40 ? 1.0 : 0.7;
+  const randomBonus = randInt(-2, 4);
+
+  const mainGain = Math.round(tr.mainVal * bias[tr.main] * condMult) + randomBonus;
+  const subGain = Math.round(tr.subVal * bias[tr.sub] * condMult) + Math.max(0, randInt(-1, 2));
+
+  game.horse.stats[tr.main] = Math.min(400, game.horse.stats[tr.main] + Math.max(1, mainGain));
+  game.horse.stats[tr.sub] = Math.min(400, game.horse.stats[tr.sub] + Math.max(1, subGain));
+
+  // 疲労蓄積
+  game.fatigue = Math.min(100, game.fatigue + randInt(8, 15));
+  game.condition = Math.max(10, game.condition - randInt(3, 8));
+
+  // 稀に怪我
+  if (game.fatigue > 80 && Math.random() < 0.15) {
+    game.condition = Math.max(10, game.condition - 20);
+    setTrainerComment('⚠️ トレーニング中に軽い故障が…。少し休ませた方がいいかもしれません。');
+  } else {
+    const commentKey = tr.main + 'Up';
+    const comments = TRAINER_COMMENTS[commentKey] || TRAINER_COMMENTS.speedUp;
+    setTrainerComment(randPick(comments) + ` (${tr.main === 'speed' ? 'スピード' : tr.main === 'stamina' ? 'スタミナ' : tr.main === 'power' ? 'パワー' : '根性'}+${mainGain})`);
+  }
+
+  advanceWeek();
+}
+
+function doRest() {
+  const recover = randInt(15, 30);
+  game.condition = Math.min(100, game.condition + recover);
+  game.fatigue = Math.max(0, game.fatigue - randInt(20, 40));
+  setTrainerComment(randPick(TRAINER_COMMENTS.rest));
+  advanceWeek();
+}
+
+function advanceWeek() {
+  game.week++;
+  if (game.week > 4) {
+    game.week = 1;
+    game.month++;
+  }
+  // 自然回復
+  game.condition = Math.min(100, game.condition + randInt(1, 3));
+  game.fatigue = Math.max(0, game.fatigue - randInt(2, 5));
+
+  showMainScreen();
+}
+
+// ========== トレーナーコメント ==========
+function setTrainerComment(text) {
+  const el = document.getElementById('trainer-comment');
+  el.innerHTML = `
+    <div class="comment-bubble">
+      <div class="comment-speaker">🧑‍🌾 調教師</div>
+      ${text}
+    </div>
+  `;
+}
+
+// ========== レース選択 ==========
+function showRaceSelect() {
+  showScreen('screen-race-select');
+  const list = document.getElementById('race-list');
+  const absMonth = getAbsoluteMonth();
+
+  // 現在の月±1ヶ月のレースを表示
+  const available = RACE_SCHEDULE.filter(r => {
+    return r.month === absMonth || (r.month === absMonth && r.week >= game.week) || (r.month === absMonth + 1);
+  });
+
+  // 常にオープン戦を追加
+  const totalStat = game.horse.stats.speed + game.horse.stats.stamina + game.horse.stats.power + game.horse.stats.spirit;
+  const openRaces = [
+    { name: 'オープン戦 (1600m)', grade: 'OP', dist: 1600, prize: 200 + Math.floor(totalStat / 2), minStat: 0, month: absMonth, week: game.week },
+    { name: 'オープン戦 (2000m)', grade: 'OP', dist: 2000, prize: 250 + Math.floor(totalStat / 2), minStat: 0, month: absMonth, week: game.week },
+    { name: 'オープン戦 (2400m)', grade: 'OP', dist: 2400, prize: 300 + Math.floor(totalStat / 2), minStat: 0, month: absMonth, week: game.week },
+  ];
+
+  const allRaces = [...available, ...openRaces];
+
+  if (allRaces.length === 0) {
+    list.innerHTML = '<div class="message-box">今出走できるレースがありません。</div>';
+    return;
+  }
+
+  list.innerHTML = allRaces.map((r, i) => {
+    const gradeClass = r.grade === 'G1' ? 'grade-g1' : r.grade === 'G2' ? 'grade-g2' : r.grade === 'G3' ? 'grade-g3' : 'grade-op';
+    return `
+      <div class="card race-select-card" onclick="enterRace(${i})" data-race-idx="${i}">
+        <div>
+          <div class="race-name">${r.name}</div>
+          <div class="race-detail">${r.dist}m / 賞金 ${r.prize}万円</div>
+        </div>
+        <span class="race-grade ${gradeClass}">${r.grade}</span>
+      </div>
+    `;
+  }).join('');
+
+  // レースデータを保存
+  window._availableRaces = allRaces;
+}
+
+// ========== レース ==========
+let raceState = null;
+
+function enterRace(idx) {
+  const race = window._availableRaces[idx];
+  if (!race) return;
+
+  raceState = {
+    race,
+    runners: generateRunners(race),
+    positions: [],
+    frame: 0,
+    finished: false,
+    results: null,
+  };
+
+  showScreen('screen-race');
+
+  // レース情報バー
+  const gradeClass = race.grade === 'G1' ? 'grade-g1' : race.grade === 'G2' ? 'grade-g2' : race.grade === 'G3' ? 'grade-g3' : 'grade-op';
+  document.getElementById('race-info-bar').innerHTML = `
+    <div class="race-info-item"><span class="race-grade ${gradeClass}">${race.grade}</span> ${race.name}</div>
+    <div class="race-info-item">距離: <span>${race.dist}m</span></div>
+    <div class="race-info-item">賞金: <span>${race.prize}万円</span></div>
+  `;
+
+  document.getElementById('race-controls').innerHTML = '';
+  document.getElementById('race-commentary').textContent = 'ゲートイン...';
+
+  setTimeout(() => {
+    document.getElementById('race-commentary').textContent = 'スタート！！';
+    startRaceAnimation();
+  }, 1500);
+}
+
+function generateRunners(race) {
+  const runners = [];
+  const totalStat = game.horse.stats.speed + game.horse.stats.stamina + game.horse.stats.power + game.horse.stats.spirit;
+  const condMult = game.condition >= 70 ? 1.05 : game.condition >= 40 ? 1.0 : 0.9;
+
+  // プレイヤーの馬
+  runners.push({
+    name: game.horse.name,
+    isPlayer: true,
+    speed: game.horse.stats.speed * condMult,
+    stamina: game.horse.stats.stamina * condMult,
+    power: game.horse.stats.power * condMult,
+    spirit: game.horse.stats.spirit * condMult,
+    color: '#ffd700',
+    pos: 0,
+    finished: false,
+    time: 0,
+  });
+
+  // ライバル馬(7頭)
+  const rivalNames = shuffle([...RIVAL_NAMES]).slice(0, 7);
+  const colors = ['#ff6b6b', '#6bff6b', '#6bb5ff', '#ff6bff', '#ffaa6b', '#6bffff', '#ff6baa'];
+
+  for (let i = 0; i < 7; i++) {
+    // ライバルの強さはレースの最低ステータスを基準にばらつきを持たせる
+    const base = race.minStat > 0 ? race.minStat * 0.8 : totalStat * 0.6;
+    const variance = race.grade === 'G1' ? 0.3 : race.grade === 'G2' ? 0.35 : 0.4;
+    const mult = 0.7 + Math.random() * variance + (race.grade === 'G1' ? 0.3 : race.grade === 'G2' ? 0.2 : 0.1);
+
+    const rivalTotal = Math.max(base * mult, 60);
+    runners.push({
+      name: rivalNames[i],
+      isPlayer: false,
+      speed: rivalTotal * (0.8 + Math.random() * 0.4),
+      stamina: rivalTotal * (0.8 + Math.random() * 0.4),
+      power: rivalTotal * (0.8 + Math.random() * 0.4),
+      spirit: rivalTotal * (0.8 + Math.random() * 0.4),
+      color: colors[i],
+      pos: 0,
+      finished: false,
+      time: 0,
+    });
+  }
+
+  return runners;
+}
+
+function startRaceAnimation() {
+  const canvas = document.getElementById('race-canvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = canvas.clientWidth * 2;
+  canvas.height = canvas.clientHeight * 2;
+  ctx.scale(2, 2);
+
+  const W = canvas.clientWidth;
+  const H = canvas.clientHeight;
+  const dist = raceState.race.dist;
+  const totalFrames = 300 + dist / 20;
+  const laneH = H / (raceState.runners.length + 1);
+  let finishCount = 0;
+
+  const commentaryEvents = [
+    { at: 0.1, text: 'スタートしました！各馬一斉にダッシュ！' },
+    { at: 0.25, text: '第1コーナーを回ります！' },
+    { at: 0.4, text: '向こう正面に入りました。各馬固まっています。' },
+    { at: 0.55, text: '第3コーナーを回って残り800m！' },
+    { at: 0.7, text: '最終コーナーを回って直線に入ります！' },
+    { at: 0.85, text: '残り200m！各馬必死の追い比べ！' },
+  ];
+  let nextComment = 0;
+
+  function animate() {
+    raceState.frame++;
+    const progress = raceState.frame / totalFrames;
+
+    // 実況
+    if (nextComment < commentaryEvents.length && progress >= commentaryEvents[nextComment].at) {
+      let text = commentaryEvents[nextComment].text;
+      // 先頭の馬名を追加
+      const sorted = [...raceState.runners].sort((a, b) => b.pos - a.pos);
+      if (progress > 0.3) {
+        text += ` 先頭は${sorted[0].name}！`;
+      }
+      document.getElementById('race-commentary').textContent = text;
+      nextComment++;
+    }
+
+    // 各馬の位置更新
+    for (const runner of raceState.runners) {
+      if (runner.finished) continue;
+
+      const speedFactor = runner.speed / 300;
+      const staminaFactor = runner.stamina / 300;
+      const powerFactor = runner.power / 400;
+      const spiritFactor = runner.spirit / 400;
+
+      // 序盤はスピード重視、中盤はスタミナ、終盤はパワー+根性
+      let accel;
+      if (progress < 0.3) {
+        accel = 0.5 + speedFactor * 0.8 + Math.random() * 0.3;
+      } else if (progress < 0.7) {
+        accel = 0.4 + staminaFactor * 0.6 + speedFactor * 0.3 + Math.random() * 0.2;
+      } else {
+        accel = 0.3 + powerFactor * 0.7 + spiritFactor * 0.5 + speedFactor * 0.2 + Math.random() * 0.25;
+        // 根性補正: 接戦ほど発動
+        const sorted = [...raceState.runners].sort((a, b) => b.pos - a.pos);
+        const lead = sorted[0].pos;
+        if (lead - runner.pos < W * 0.1) {
+          accel += spiritFactor * 0.3;
+        }
+      }
+
+      runner.pos += accel;
+      runner.time = raceState.frame;
+
+      if (runner.pos >= W - 60) {
+        runner.pos = W - 60;
+        runner.finished = true;
+        finishCount++;
+      }
+    }
+
+    // 描画
+    ctx.clearRect(0, 0, W, H);
+
+    // 芝
+    ctx.fillStyle = '#2d5a1b';
+    ctx.fillRect(0, 0, W, H);
+
+    // レーン
+    for (let i = 0; i < raceState.runners.length; i++) {
+      const y = laneH * (i + 0.5);
+      // レーン線
+      ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(0, y + laneH * 0.4);
+      ctx.lineTo(W, y + laneH * 0.4);
+      ctx.stroke();
+    }
+
+    // ゴールライン
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 3;
+    ctx.setLineDash([6, 4]);
+    ctx.beginPath();
+    ctx.moveTo(W - 60, 0);
+    ctx.lineTo(W - 60, H);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // ゴールテキスト
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 12px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('GOAL', W - 60, 14);
+
+    // 馬を描画
+    for (let i = 0; i < raceState.runners.length; i++) {
+      const runner = raceState.runners[i];
+      const y = laneH * (i + 0.5);
+      const x = Math.max(10, runner.pos);
+
+      // 馬体
+      ctx.font = `${Math.min(laneH * 0.7, 28)}px serif`;
+      ctx.textAlign = 'center';
+      ctx.fillText('🏇', x, y + laneH * 0.15);
+
+      // 名前
+      ctx.font = `bold ${Math.min(laneH * 0.3, 11)}px sans-serif`;
+      ctx.fillStyle = runner.isPlayer ? '#ffd700' : '#ddd';
+      ctx.fillText(runner.name, x, y + laneH * 0.35);
+
+      // プレイヤーマーカー
+      if (runner.isPlayer) {
+        ctx.fillStyle = '#ffd700';
+        ctx.font = `bold ${Math.min(laneH * 0.25, 10)}px sans-serif`;
+        ctx.fillText('▼', x, y - laneH * 0.25);
+      }
+    }
+
+    // 全馬ゴールまたはフレーム上限
+    if (finishCount >= raceState.runners.length || raceState.frame > totalFrames + 100) {
+      // 未ゴールの馬を強制フィニッシュ
+      for (const r of raceState.runners) {
+        if (!r.finished) { r.finished = true; r.time = raceState.frame; }
+      }
+      raceState.finished = true;
+      showRaceResult();
+      return;
+    }
+
+    requestAnimationFrame(animate);
+  }
+
+  requestAnimationFrame(animate);
+}
+
+function showRaceResult() {
+  const sorted = [...raceState.runners].sort((a, b) => a.time - b.time || (b.pos - a.pos));
+  const playerRank = sorted.findIndex(r => r.isPlayer) + 1;
+  const race = raceState.race;
+
+  // タイム計算
+  const baseTime = race.dist / 1000 * 60; // 基準タイム(秒)
+  sorted.forEach((r, i) => {
+    const timeSec = baseTime + (r.time - sorted[0].time) * 0.05 + Math.random() * 0.3;
+    const min = Math.floor(timeSec / 60);
+    const sec = (timeSec % 60).toFixed(1);
+    r.displayTime = `${min}:${sec.padStart(4, '0')}`;
+  });
+
+  // 結果画面
+  showScreen('screen-result');
+
+  if (playerRank === 1) {
+    document.getElementById('result-title').textContent = '🏆 1着！おめでとう！ 🏆';
+    document.getElementById('result-message').innerHTML = `
+      <strong>${game.horse.name}</strong>が見事1着でゴール！<br>
+      ${randPick(TRAINER_COMMENTS.raceWin)}
+    `;
+    document.getElementById('result-prize').innerHTML = `<span style="font-size:24px; color:#ffd700;">賞金 ${race.prize}万円 獲得！</span>`;
+    game.money += race.prize;
+    game.wins++;
+    game.trophies.push(`${race.name}(${race.grade})`);
+  } else if (playerRank <= 3) {
+    const prizes = [0, race.prize, Math.floor(race.prize * 0.4), Math.floor(race.prize * 0.2)];
+    const p = prizes[playerRank];
+    document.getElementById('result-title').textContent = `${playerRank}着！惜しい！`;
+    document.getElementById('result-message').innerHTML = `
+      <strong>${game.horse.name}</strong>は${playerRank}着でした。<br>
+      ${randPick(TRAINER_COMMENTS.raceLose)}
+    `;
+    document.getElementById('result-prize').innerHTML = `<span style="font-size:20px; color:#c0c0c0;">賞金 ${p}万円 獲得</span>`;
+    game.money += p;
+    game.losses++;
+  } else {
+    document.getElementById('result-title').textContent = `${playerRank}着...`;
+    document.getElementById('result-message').innerHTML = `
+      <strong>${game.horse.name}</strong>は${playerRank}着でした。<br>
+      ${randPick(TRAINER_COMMENTS.raceLose)}
+    `;
+    document.getElementById('result-prize').innerHTML = '';
+    game.losses++;
+  }
+
+  game.raceHistory.push({ name: race.name, grade: race.grade, rank: playerRank });
+
+  // レース後の疲労
+  game.fatigue = Math.min(100, game.fatigue + randInt(15, 30));
+  game.condition = Math.max(10, game.condition - randInt(5, 15));
+
+  // レース経験でステータス微増
+  game.horse.stats.speed = Math.min(400, game.horse.stats.speed + randInt(1, 3));
+  game.horse.stats.spirit = Math.min(400, game.horse.stats.spirit + randInt(1, 4));
+
+  // 結果テーブル
+  const tbody = document.getElementById('result-body');
+  tbody.innerHTML = sorted.map((r, i) => {
+    const rank = i + 1;
+    const cls = rank === 1 ? 'rank-1' : rank === 2 ? 'rank-2' : rank === 3 ? 'rank-3' : '';
+    const marker = r.isPlayer ? ' ◀' : '';
+    return `<tr class="${cls}"><td>${rank}</td><td>${r.name}${marker}</td><td>${r.displayTime}</td></tr>`;
+  }).join('');
+}
+
+function afterRace() {
+  advanceWeek();
+}
+
+// ========== エンディング ==========
+function showEnding() {
+  showScreen('screen-ending');
+
+  const totalPrize = game.money;
+  const g1Wins = game.trophies.filter(t => t.includes('G1')).length;
+  const g2Wins = game.trophies.filter(t => t.includes('G2')).length;
+
+  let rank = '平凡な競走馬';
+  if (g1Wins >= 5) rank = '伝説の名馬 🌟🌟🌟';
+  else if (g1Wins >= 3) rank = '歴史的名馬 🌟🌟';
+  else if (g1Wins >= 1) rank = 'G1ホース 🌟';
+  else if (game.wins >= 5) rank = '重賞ウィナー';
+  else if (game.wins >= 1) rank = '勝ち上がり馬';
+
+  document.getElementById('ending-stats').innerHTML = `
+    <div style="text-align:center; margin-bottom:12px;">
+      <span style="font-size:48px;">🐴</span>
+      <div style="font-size:24px; color:#ffd700; font-weight:bold;">${game.horse.name}</div>
+      <div style="font-size:18px; color:#aaa;">${rank}</div>
+    </div>
+    ${renderStatBars(game.horse.stats)}
+    <div style="margin-top:12px; display:flex; justify-content:space-around; text-align:center;">
+      <div><div style="font-size:24px; color:#ffd700;">${game.wins}</div><div style="font-size:12px; color:#aaa;">勝利</div></div>
+      <div><div style="font-size:24px; color:#aaa;">${game.losses}</div><div style="font-size:12px; color:#aaa;">敗北</div></div>
+      <div><div style="font-size:24px; color:#ffd700;">${g1Wins}</div><div style="font-size:12px; color:#aaa;">G1勝利</div></div>
+      <div><div style="font-size:24px; color:#27ae60;">${totalPrize}</div><div style="font-size:12px; color:#aaa;">獲得賞金(万)</div></div>
+    </div>
+  `;
+
+  document.getElementById('ending-trophies').innerHTML = `
+    <h3 style="color:#ffd700; margin-bottom:8px;">🏆 獲得タイトル</h3>
+    ${game.trophies.length > 0
+      ? game.trophies.map(t => `<span class="trophy won">🏆 ${t}</span>`).join(' ')
+      : '<span style="color:#aaa;">タイトルなし</span>'
+    }
+  `;
+}
+
+// ========== ユーティリティ ==========
+function randInt(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function randPick(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+</script>
+</body>
+</html>
