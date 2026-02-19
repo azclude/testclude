@@ -42,8 +42,8 @@ jobs:
       - name: Combine static files and Next.js output
         run: |
           mkdir -p _site/diagnosis
-          # Copy root-level static files
-          cp -r index.html assets hitokuchi-banushi-yametoke.html tanuki-batting.html tanuki-whack.html tanuki-puyo.html _site/ 2>/dev/null || true
+          # Copy all root-level HTML files and assets
+          cp -r *.html assets _site/ 2>/dev/null || true
           # Copy Next.js output into /diagnosis/ subpath
           cp -r home-diagnosis/out/* _site/diagnosis/
 
