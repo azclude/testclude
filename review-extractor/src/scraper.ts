@@ -1,289 +1,324 @@
-import { chromium, type Browser, type Page } from "playwright";
+import { chromium, type Browser, type BrowserContext, type Page } from "playwright";
 import type { Location, Review } from "./types.js";
 
-const GOOGLE_MAPS_BASE = "https://www.google.com/maps";
-const SEARCH_DELAY = 2000;
-const SCROLL_DELAY = 1500;
+const DELAY_MS = 2000;
+const SCROLL_PAUSE_MS = 1500;
 
 /**
- * Google Maps から住宅メーカーの展示場・支店を検索し、口コミを抽出する
+ * Google Maps から住宅メーカーの展示場・支店の口コミを抽出するスクレイパー
  */
 export class GoogleMapsReviewScraper {
   private browser: Browser | null = null;
-  private page: Page | null = null;
+  private context: BrowserContext | null = null;
 
+  /**
+   * ブラウザを起動する
+   */
   async init(): Promise<void> {
     this.browser = await chromium.launch({
       headless: true,
-      args: ["--no-sandbox", "--disable-setuid-sandbox", "--lang=ja"],
+      args: [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-gpu",
+        "--lang=ja",
+      ],
     });
-    const context = await this.browser.newContext({
+    this.context = await this.browser.newContext({
       locale: "ja-JP",
       userAgent:
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      viewport: { width: 1280, height: 900 },
     });
-    this.page = await context.newPage();
+    console.log("[ブラウザ] 起動完了");
   }
 
+  /**
+   * ブラウザを終了する
+   */
   async close(): Promise<void> {
     if (this.browser) {
       await this.browser.close();
       this.browser = null;
-      this.page = null;
+      this.context = null;
     }
+    console.log("[ブラウザ] 終了");
   }
 
   /**
-   * 住宅メーカー名で展示場・支店を検索
+   * Google Maps で住宅メーカーの展示場・支店を検索する
    */
   async searchLocations(manufacturer: string): Promise<Location[]> {
-    const page = this.ensurePage();
-    const query = `${manufacturer} 展示場 OR 支店 OR モデルハウス`;
-    const searchUrl = `${GOOGLE_MAPS_BASE}/search/${encodeURIComponent(query)}`;
+    const page = await this.newPage();
+    const query = `${manufacturer} 展示場 モデルハウス`;
+    const url = `https://www.google.com/maps/search/${encodeURIComponent(query)}`;
 
-    console.log(`[検索] "${query}" でGoogle Mapsを検索中...`);
-    await page.goto(searchUrl, { waitUntil: "networkidle", timeout: 30000 });
-    await this.delay(SEARCH_DELAY);
+    console.log(`[検索] "${query}" で Google Maps を検索中...`);
+    await page.goto(url, { waitUntil: "networkidle", timeout: 30000 });
+    await this.delay(DELAY_MS);
 
-    // Cookie同意ダイアログがあれば閉じる
-    await this.dismissCookieConsent(page);
+    // Cookie 同意があれば閉じる
+    await this.dismissConsent(page);
 
-    // 検索結果リストをスクロールして全件読み込む
-    await this.scrollSearchResults(page);
+    // 検索結果リストをスクロールして全件読み込む（最大10回）
+    for (let i = 0; i < 10; i++) {
+      const endOfList = await page.evaluate(() => {
+        const feed = document.querySelector('div[role="feed"]');
+        if (!feed) return true;
+        feed.scrollTop = feed.scrollHeight;
+        // "これ以上の結果はありません"テキストが出たら終了
+        return !!document.querySelector('p.fontBodyMedium span:has-text("これ以上"), span.HlvSq');
+      });
+      await this.delay(SCROLL_PAUSE_MS);
+      if (endOfList) break;
+    }
 
+    // 検索結果からロケーション一覧を抽出
     const locations: Location[] = await page.evaluate(() => {
       const results: Location[] = [];
-      // Google Maps の検索結果リスト内の各アイテム
-      const items = document.querySelectorAll('div[role="feed"] > div > div > a');
-      for (const item of items) {
-        const href = item.getAttribute("href");
-        if (!href || !href.includes("/maps/place/")) continue;
+      const anchors = document.querySelectorAll('a[href*="/maps/place/"]');
+      const seen = new Set<string>();
 
-        const nameEl = item.querySelector(".fontHeadlineSmall");
+      for (const a of anchors) {
+        const href = (a as HTMLAnchorElement).href;
+        if (seen.has(href)) continue;
+        seen.add(href);
+
+        // 名前
+        const nameEl = a.querySelector(".fontHeadlineSmall");
         const name = nameEl?.textContent?.trim() ?? "";
+        if (!name) continue;
 
-        // 星評価
-        const ratingEl = item.closest("div")?.querySelector('span[role="img"]');
-        const ratingText = ratingEl?.getAttribute("aria-label") ?? "";
-        const ratingMatch = ratingText.match(/([\d.]+)/);
+        // 親要素から星評価と口コミ数を探す
+        const container = a.closest("div");
+        const ratingEl = container?.querySelector('span[role="img"]');
+        const ratingLabel = ratingEl?.getAttribute("aria-label") ?? "";
+        const ratingMatch = ratingLabel.match(/([\d.]+)/);
         const overallRating = ratingMatch ? parseFloat(ratingMatch[1]) : 0;
 
-        // 口コミ数
-        const reviewCountEl = item
-          .closest("div")
-          ?.querySelector('span[aria-label*="件"]');
-        const reviewCountText = reviewCountEl?.getAttribute("aria-label") ?? "";
-        const countMatch = reviewCountText.match(/([\d,]+)/);
+        // 口コミ数 (例: "(123)")
+        const allText = container?.textContent ?? "";
+        const countMatch = allText.match(/\((\d[\d,]*)\)/);
         const reviewCount = countMatch
           ? parseInt(countMatch[1].replace(",", ""), 10)
           : 0;
 
         // 住所
-        const addressEls = item.closest("div")?.querySelectorAll(".fontBodyMedium");
         let address = "";
-        if (addressEls) {
-          for (const el of addressEls) {
-            const text = el.textContent?.trim() ?? "";
-            if (text.match(/[都道府県市区町村]/)) {
-              address = text;
-              break;
-            }
+        const spans = container?.querySelectorAll("span") ?? [];
+        for (const span of spans) {
+          const t = span.textContent?.trim() ?? "";
+          if (/[都道府県市区町村郡]/.test(t) && t.length > 5) {
+            address = t;
+            break;
           }
         }
 
-        if (name) {
-          results.push({
-            name,
-            url: href,
-            address,
-            overallRating,
-            reviewCount,
-          });
-        }
+        results.push({ name, url: href, address, overallRating, reviewCount });
       }
       return results;
     });
 
-    console.log(`[結果] ${locations.length} 件の展示場・支店を検出`);
+    console.log(`[結果] ${locations.length} 件の拠点を検出`);
+    for (const loc of locations) {
+      console.log(`  - ${loc.name} (★${loc.overallRating} / ${loc.reviewCount}件)`);
+    }
+
+    await page.close();
     return locations;
   }
 
   /**
-   * 特定の場所の口コミを抽出する
+   * 特定の拠点の口コミを取得する
    */
-  async extractReviews(
-    location: Location,
-    maxReviews: number = 100
-  ): Promise<Review[]> {
-    const page = this.ensurePage();
-    console.log(`[口コミ取得] ${location.name} の口コミを取得中...`);
+  async extractReviews(location: Location, maxReviews = 100): Promise<Review[]> {
+    const page = await this.newPage();
+    console.log(`\n[口コミ取得] ${location.name}`);
 
     await page.goto(location.url, { waitUntil: "networkidle", timeout: 30000 });
-    await this.delay(SEARCH_DELAY);
+    await this.delay(DELAY_MS);
 
     // 「口コミ」タブをクリック
-    const reviewTab = await page.$('button[role="tab"]:has-text("口コミ")');
-    if (reviewTab) {
-      await reviewTab.click();
-      await this.delay(SEARCH_DELAY);
-    } else {
-      // 口コミボタンが別の形式の場合
-      const altReviewBtn = await page.$(
-        'button:has-text("口コミをすべて表示"), button:has-text("Google のクチコミ")'
-      );
-      if (altReviewBtn) {
-        await altReviewBtn.click();
-        await this.delay(SEARCH_DELAY);
-      }
+    const clicked = await this.clickReviewsTab(page);
+    if (!clicked) {
+      console.log(`  口コミタブが見つかりません。スキップします。`);
+      await page.close();
+      return [];
     }
+    await this.delay(DELAY_MS);
+
+    // 口コミリストを並び替え（新しい順）
+    await this.sortReviewsByNewest(page);
 
     // 口コミリストをスクロールして読み込む
     await this.scrollReviewList(page, maxReviews);
 
     // 「もっと見る」を全部展開
-    await this.expandAllReviews(page);
+    await this.expandAllReviewTexts(page);
 
-    const reviews: Review[] = await page.evaluate(
-      ({ loc }) => {
-        const reviewElements = document.querySelectorAll(
-          'div[data-review-id], div[class*="review"]'
-        );
-        const extractedReviews: Review[] = [];
+    // 口コミ要素を解析
+    const rawReviews = await page.evaluate((locInfo) => {
+      const items = document.querySelectorAll('div[data-review-id][data-review-id!=""]');
+      const reviews: Array<{
+        author: string;
+        rating: number;
+        text: string;
+        date: string;
+        reviewId: string;
+        locationName: string;
+        locationUrl: string;
+      }> = [];
 
-        for (const el of reviewElements) {
-          // 投稿者名
-          const authorEl = el.querySelector(
-            'div[class*="d4r55"] span, button[data-review-id] div'
-          );
-          const author = authorEl?.textContent?.trim() ?? "匿名";
+      for (const el of items) {
+        const reviewId = el.getAttribute("data-review-id") ?? "";
 
-          // 星評価
-          const starsEl = el.querySelector('span[role="img"][aria-label*="星"]');
-          const starsLabel = starsEl?.getAttribute("aria-label") ?? "";
-          const starsMatch = starsLabel.match(/([\d.]+)/);
-          const rating = starsMatch ? parseFloat(starsMatch[1]) : 0;
+        // 投稿者名
+        const authorBtn = el.querySelector('button[data-review-id]');
+        const authorDiv = authorBtn?.querySelector("div");
+        const author = authorDiv?.textContent?.trim() ?? "匿名";
 
-          // 口コミ本文
-          const textEl = el.querySelector(
-            'span[class*="wiI7pd"], div[class*="MyEned"] span'
-          );
-          const text = textEl?.textContent?.trim() ?? "";
+        // 星評価
+        const starEl = el.querySelector('span[role="img"]');
+        const starLabel = starEl?.getAttribute("aria-label") ?? "";
+        const starMatch = starLabel.match(/([\d.]+)/);
+        const rating = starMatch ? parseInt(starMatch[1], 10) : 0;
 
-          // 日付
-          const dateEl = el.querySelector('span[class*="rsqaWe"]');
-          const date = dateEl?.textContent?.trim() ?? "";
+        // 口コミ本文（展開済み）
+        const textEl = el.querySelector('span.wiI7pd');
+        const text = textEl?.textContent?.trim() ?? "";
 
-          // 口コミの共有リンク（data-review-id から構築）
-          const reviewId =
-            el.getAttribute("data-review-id") ??
-            el.querySelector("[data-review-id]")?.getAttribute("data-review-id") ??
-            "";
+        // 日付
+        const dateEl = el.querySelector('span.rsqaWe');
+        const date = dateEl?.textContent?.trim() ?? "";
 
-          if (text && rating > 0) {
-            extractedReviews.push({
-              author,
-              rating,
-              text,
-              date,
-              shareLink: "", // 後でIDベースで構築
-              locationName: loc.name,
-              locationUrl: loc.url,
-              _reviewId: reviewId,
-            } as Review & { _reviewId: string });
-          }
+        if (text && rating > 0) {
+          reviews.push({
+            author,
+            rating,
+            text,
+            date,
+            reviewId,
+            locationName: locInfo.name,
+            locationUrl: locInfo.url,
+          });
         }
-        return extractedReviews;
-      },
-      { loc: location }
-    );
+      }
+      return reviews;
+    }, { name: location.name, url: location.url });
 
-    // 共有リンクを構築
-    // Google Maps の口コミ共有リンク形式を使って個別リンクを生成
-    for (const review of reviews) {
-      const r = review as Review & { _reviewId: string };
-      if (r._reviewId) {
-        // Google Maps の口コミ共有URL形式
-        review.shareLink = await this.getReviewShareLink(page, r._reviewId);
-      }
-      if (!review.shareLink) {
-        // フォールバック: 場所のURLに口コミソートパラメータを付与
-        review.shareLink = location.url.includes("?")
-          ? `${location.url}&reviews`
-          : `${location.url}?reviews`;
-      }
-      // _reviewId を削除
-      delete (review as Record<string, unknown>)["_reviewId"];
+    // 各口コミの共有リンクを取得
+    const reviews: Review[] = [];
+    for (const raw of rawReviews) {
+      const shareLink = await this.getReviewShareLink(page, raw.reviewId);
+      reviews.push({
+        author: raw.author,
+        rating: raw.rating,
+        text: raw.text,
+        date: raw.date,
+        shareLink,
+        locationName: raw.locationName,
+        locationUrl: raw.locationUrl,
+      });
     }
 
-    console.log(`[口コミ取得] ${location.name}: ${reviews.length} 件取得`);
+    console.log(`  ${reviews.length} 件の口コミを取得`);
+    await page.close();
     return reviews;
   }
 
   /**
-   * 口コミの共有リンクを取得する（三点メニューから）
+   * 口コミの共有リンクを取得する
+   * Google Maps の各口コミの三点メニュー → 共有 からURLを取得
    */
-  private async getReviewShareLink(
-    page: Page,
-    reviewId: string
-  ): Promise<string> {
+  private async getReviewShareLink(page: Page, reviewId: string): Promise<string> {
+    if (!reviewId) return "";
+
     try {
-      // data-review-id を持つ要素を探す
-      const reviewEl = await page.$(`[data-review-id="${reviewId}"]`);
+      const reviewEl = await page.$(`div[data-review-id="${reviewId}"]`);
       if (!reviewEl) return "";
 
-      // 三点メニューボタンをクリック
-      const menuBtn = await reviewEl.$('button[data-value="共有"], button[aria-label*="メニュー"], button[data-tooltip*="More"]');
-      if (!menuBtn) {
-        // alt: class based menu button
-        const altMenuBtn = await reviewEl.$('button[class*="action"]');
-        if (!altMenuBtn) return "";
-        await altMenuBtn.click();
-      } else {
-        await menuBtn.click();
-      }
-      await this.delay(500);
+      // 三点メニューボタン
+      const menuBtn = await reviewEl.$('button[data-value="共有"], button[aria-label*="その他"], button[aria-label*="More actions"], button.e2moi');
+      if (!menuBtn) return "";
+
+      await menuBtn.click();
+      await this.delay(800);
 
       // 「共有」メニュー項目をクリック
-      const shareItem = await page.$('div[role="menuitem"]:has-text("共有"), a:has-text("共有")');
-      if (!shareItem) {
-        // メニューを閉じる
+      const shareMenuItem = await page.$('div[role="menuitemradio"]:has-text("共有"), div[role="menuitem"]:has-text("共有"), a[data-index]:has-text("共有")');
+      if (!shareMenuItem) {
         await page.keyboard.press("Escape");
+        await this.delay(300);
         return "";
       }
-      await shareItem.click();
-      await this.delay(1000);
+      await shareMenuItem.click();
+      await this.delay(1500);
 
-      // 共有ダイアログからリンクを取得
-      const linkInput = await page.$('input[readonly][value*="goo.gl"], input[readonly][value*="maps"]');
-      let shareLink = "";
+      // 共有ダイアログからURLを取得
+      const linkInput = await page.$('input[type="text"][readonly], input[value*="goo.gl"], input[value*="maps.app"]');
+      let shareUrl = "";
       if (linkInput) {
-        shareLink = (await linkInput.getAttribute("value")) ?? "";
+        shareUrl = (await linkInput.getAttribute("value")) ?? "";
       }
 
       // ダイアログを閉じる
-      await page.keyboard.press("Escape");
-      await this.delay(300);
+      const closeBtn = await page.$('button[aria-label="閉じる"], button[aria-label="Close"]');
+      if (closeBtn) {
+        await closeBtn.click();
+      } else {
+        await page.keyboard.press("Escape");
+      }
+      await this.delay(500);
 
-      return shareLink;
+      return shareUrl;
     } catch {
+      // エラー時はリカバリ
+      try {
+        await page.keyboard.press("Escape");
+      } catch {}
       return "";
     }
   }
 
   /**
-   * 検索結果リストをスクロール
+   * 「口コミ」タブをクリック
    */
-  private async scrollSearchResults(page: Page): Promise<void> {
-    const feedSelector = 'div[role="feed"]';
-    const feed = await page.$(feedSelector);
-    if (!feed) return;
+  private async clickReviewsTab(page: Page): Promise<boolean> {
+    // タブ形式
+    const tab = await page.$('button[role="tab"]:has-text("口コミ"), button[role="tab"]:has-text("クチコミ")');
+    if (tab) {
+      await tab.click();
+      return true;
+    }
+    // ボタン形式
+    const btn = await page.$('button:has-text("口コミをすべて表示"), button:has-text("クチコミをすべて表示"), button:has-text("Google のクチコミ")');
+    if (btn) {
+      await btn.click();
+      return true;
+    }
+    return false;
+  }
 
-    for (let i = 0; i < 5; i++) {
-      await page.evaluate((sel) => {
-        const el = document.querySelector(sel);
-        if (el) el.scrollTop = el.scrollHeight;
-      }, feedSelector);
-      await this.delay(SCROLL_DELAY);
+  /**
+   * 口コミを新しい順にソート
+   */
+  private async sortReviewsByNewest(page: Page): Promise<void> {
+    try {
+      const sortBtn = await page.$('button[aria-label*="並べ替え"], button[data-value="sort"]');
+      if (sortBtn) {
+        await sortBtn.click();
+        await this.delay(800);
+        // 「新しい順」を選択
+        const newestOpt = await page.$('div[role="menuitemradio"]:has-text("新しい順"), li[data-index]:has-text("新しい順")');
+        if (newestOpt) {
+          await newestOpt.click();
+          await this.delay(DELAY_MS);
+        } else {
+          await page.keyboard.press("Escape");
+        }
+      }
+    } catch {
+      // ソートできなくても続行
     }
   }
 
@@ -291,53 +326,44 @@ export class GoogleMapsReviewScraper {
    * 口コミリストをスクロールして全件読み込む
    */
   private async scrollReviewList(page: Page, maxReviews: number): Promise<void> {
-    // 口コミのスクロールコンテナを探す
-    const scrollContainerSelector =
-      'div[class*="m6QErb"][class*="DxyBCb"], div[role="main"] div[tabindex="-1"]';
+    const scrollSelector = 'div.m6QErb.DxyBCb, div[role="main"] div[tabindex="-1"]';
+    let prevCount = 0;
+    let stableCount = 0;
 
-    let previousCount = 0;
-    let sameCountStreak = 0;
-
-    for (let i = 0; i < 30; i++) {
+    for (let i = 0; i < 50; i++) {
       await page.evaluate((sel) => {
-        const container = document.querySelector(sel);
-        if (container) {
-          container.scrollTop = container.scrollHeight;
-        }
-      }, scrollContainerSelector);
-      await this.delay(SCROLL_DELAY);
+        const el = document.querySelector(sel);
+        if (el) el.scrollTop = el.scrollHeight;
+      }, scrollSelector);
+      await this.delay(SCROLL_PAUSE_MS);
 
-      const currentCount = await page.evaluate(() => {
-        return document.querySelectorAll(
-          'div[data-review-id], div[class*="review"]'
-        ).length;
-      });
+      const count = await page.evaluate(() =>
+        document.querySelectorAll('div[data-review-id][data-review-id!=""]').length
+      );
 
-      if (currentCount >= maxReviews) break;
-      if (currentCount === previousCount) {
-        sameCountStreak++;
-        if (sameCountStreak >= 3) break; // これ以上読み込めない
+      console.log(`  スクロール ${i + 1}: ${count} 件読み込み済み`);
+
+      if (count >= maxReviews) break;
+      if (count === prevCount) {
+        stableCount++;
+        if (stableCount >= 3) break;
       } else {
-        sameCountStreak = 0;
+        stableCount = 0;
       }
-      previousCount = currentCount;
+      prevCount = count;
     }
   }
 
   /**
-   * 「もっと見る」ボタンを全部クリックして口コミ全文を展開
+   * 口コミの「もっと見る」を全てクリックして全文展開
    */
-  private async expandAllReviews(page: Page): Promise<void> {
-    const expandButtons = await page.$$(
-      'button[aria-label="もっと見る"], button:has-text("もっと見る"), button[aria-expanded="false"][class*="expand"]'
-    );
-    for (const btn of expandButtons) {
+  private async expandAllReviewTexts(page: Page): Promise<void> {
+    const buttons = await page.$$('button.w8nwRe.kyuRq, button[aria-label="もっと見る"]');
+    for (const btn of buttons) {
       try {
         await btn.click();
-        await this.delay(200);
-      } catch {
-        // クリックできなくても続行
-      }
+        await this.delay(100);
+      } catch {}
     }
     await this.delay(500);
   }
@@ -345,23 +371,21 @@ export class GoogleMapsReviewScraper {
   /**
    * Cookie同意ダイアログを閉じる
    */
-  private async dismissCookieConsent(page: Page): Promise<void> {
+  private async dismissConsent(page: Page): Promise<void> {
     try {
-      const consentBtn = await page.$(
-        'button:has-text("同意する"), button:has-text("すべて承認"), button[aria-label="すべて同意"]'
+      const btn = await page.$(
+        'button:has-text("同意する"), button:has-text("すべて承認"), form[action*="consent"] button'
       );
-      if (consentBtn) {
-        await consentBtn.click();
+      if (btn) {
+        await btn.click();
         await this.delay(1000);
       }
-    } catch {
-      // 同意ダイアログがなくても続行
-    }
+    } catch {}
   }
 
-  private ensurePage(): Page {
-    if (!this.page) throw new Error("ブラウザが初期化されていません。init()を先に呼んでください。");
-    return this.page;
+  private async newPage(): Promise<Page> {
+    if (!this.context) throw new Error("ブラウザが初期化されていません。init() を先に呼んでください。");
+    return this.context.newPage();
   }
 
   private delay(ms: number): Promise<void> {

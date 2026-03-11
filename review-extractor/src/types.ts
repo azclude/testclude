@@ -1,4 +1,4 @@
-/** 個別の口コミ */
+/** Google Maps 上の個別の口コミ */
 export interface Review {
   /** 投稿者名 */
   author: string;
@@ -8,7 +8,7 @@ export interface Review {
   text: string;
   /** 投稿日（テキスト） */
   date: string;
-  /** 口コミの共有リンク（Google Maps上のURL） */
+  /** Google Maps上の口コミ共有リンク */
   shareLink: string;
   /** 展示場・支店名 */
   locationName: string;
@@ -16,20 +16,30 @@ export interface Review {
   locationUrl: string;
 }
 
-/** 展示場・支店の情報 */
+/** Google Maps 上の展示場・支店の情報 */
 export interface Location {
+  /** 場所の名前 */
   name: string;
+  /** Google Maps URL */
   url: string;
+  /** 住所 */
   address: string;
+  /** 総合星評価 */
   overallRating: number;
+  /** 口コミ件数 */
   reviewCount: number;
 }
 
 /** 抽出結果 */
 export interface ExtractionResult {
+  /** 住宅メーカー名 */
   manufacturer: string;
+  /** 抽出日時 */
   extractedAt: string;
+  /** 検索した拠点数 */
   totalLocations: number;
+  /** ポジティブ口コミ（★4-5）最大30件 */
   positiveReviews: Review[];
+  /** ネガティブ口コミ（★1-2）最大30件 */
   negativeReviews: Review[];
 }
