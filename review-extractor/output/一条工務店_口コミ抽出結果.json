@@ -1,0 +1,443 @@
+{
+  "manufacturer": "一条工務店",
+  "extractedAt": "2026-03-11",
+  "summary": {
+    "positiveCount": 30,
+    "negativeCount": 30,
+    "sources": [
+      "みん評 (minhyo.jp)",
+      "オリコン顧客満足度 (life.oricon.co.jp)",
+      "わたしの家づくり (watashino-iedukuri.com)",
+      "マイナビニュース (news.mynavi.jp)",
+      "リアマネ (fantas-tech.co.jp)",
+      "THE ROOM TOUR (the-room-tour.com)",
+      "チューモンズー (howto-custom-home.jp)",
+      "X / 旧Twitter (x.com)",
+      "その他複数サイト"
+    ]
+  },
+  "positiveReviews": [
+    {
+      "no": 1,
+      "category": "住宅性能",
+      "text": "耐震性能は申し分ないし、夏はすぐ冷え、冬はどこも暖かいのが最高。家の快適度が高いので他の家やホテルに泊まると違いが分かりすぎる。（30代／女性）",
+      "source": "オリコン顧客満足度",
+      "url": "https://life.oricon.co.jp/rank-house-maker/company/ichijo/"
+    },
+    {
+      "no": 2,
+      "category": "住宅性能",
+      "text": "気密性、断熱性に優れ、生活のクオリティが格段に上がった。",
+      "source": "オリコン顧客満足度",
+      "url": "https://life.oricon.co.jp/rank-house-maker/company/ichijo/"
+    },
+    {
+      "no": 3,
+      "category": "住宅性能",
+      "text": "住み心地良いです。冬は特に良いですね。夏は1日エアコンだが28度設定で全然涼しいです。太陽光パネルもつけており、電気代は抑えられています。",
+      "source": "みん評",
+      "url": "https://minhyo.jp/ichijokoumuten"
+    },
+    {
+      "no": 4,
+      "category": "床暖房",
+      "text": "全館床暖房は、本当に快適です。冬に床暖房以外の暖房をつけたことがなく、裸足でも快適。",
+      "source": "みん評",
+      "url": "https://minhyo.jp/ichijokoumuten"
+    },
+    {
+      "no": 5,
+      "category": "床暖房",
+      "text": "全室床冷暖房で快適に過ごせる。特に冬は暖房は床暖房だけで過ごせてるのでエアコンやストーブやヒーターなど使ったことは無い。",
+      "source": "わたしの家づくり",
+      "url": "https://watashino-iedukuri.com/report/reviews/"
+    },
+    {
+      "no": 6,
+      "category": "床暖房",
+      "text": "全館床暖房のある暮らしは快適そのもの。お風呂場や脱衣所にも床下冷暖房が入るため、ヒートショックの予防策にもなり高齢者にも安心。",
+      "source": "チューモンズー",
+      "url": "https://howto-custom-home.jp/2019/09/07/ichijo-hyoban/"
+    },
+    {
+      "no": 7,
+      "category": "さらぽか",
+      "text": "外気温が38度に近い日でも床冷房23〜24度＋サーキュレーターがあれば快適に過ごせた。もしもう一度一条工務店で建てる機会があっても、さらぽかは絶対導入する。",
+      "source": "チューモンズー",
+      "url": "https://howto-custom-home.jp/2022/07/19/sarapoka/"
+    },
+    {
+      "no": 8,
+      "category": "さらぽか",
+      "text": "湿気の多い梅雨時期でも湿度40%を保てる。部屋干しでも6時間もあれば乾くためワーキングマザーの家事時短にもなる。",
+      "source": "チューモンズー",
+      "url": "https://howto-custom-home.jp/2022/07/19/sarapoka/"
+    },
+    {
+      "no": 9,
+      "category": "さらぽか",
+      "text": "猛暑日でも日中LDKではエアコンをつけずに過ごせており、就寝する部屋にエアコンが1台あれば快適に過ごせる。",
+      "source": "よつはちブログ",
+      "url": "https://yotsuhachiblog.com/sarapoka-2/"
+    },
+    {
+      "no": 10,
+      "category": "光熱費",
+      "text": "実際に住んでみて、光熱費はアパート時代（プロパンガス）よりも安く、オール電化で水道代合わせても月7千円安くなった。",
+      "source": "わたしの家づくり",
+      "url": "https://watashino-iedukuri.com/report/reviews/"
+    },
+    {
+      "no": 11,
+      "category": "光熱費",
+      "text": "2024年の年間電気代は45,000円、売電収入は183,000円で、差額利益は138,000円。",
+      "source": "一条スタイル",
+      "url": "https://www.ichijo-style.com/ichijo-floorheating-costs/"
+    },
+    {
+      "no": 12,
+      "category": "光熱費",
+      "text": "さらぽかや全館床暖房のおかげで、平均して約12,000円/月ほどの電気代で快適な暮らしができている。太陽光発電は一条工務店の想定を約15%上回る実績。",
+      "source": "ほべほべすっぺ",
+      "url": "https://hobe2suppe.com/electricity-bills-2020-2021/"
+    },
+    {
+      "no": 13,
+      "category": "光熱費",
+      "text": "物価高・電気代高騰の中で、一条を選んで家計が助けられている。アパートの家賃とほとんど変わらないコストで、快適さは圧勝。",
+      "source": "おうちスタイルナビ",
+      "url": "https://tenmaruco.xsrv.jp/ichijyo-kounetsuhi"
+    },
+    {
+      "no": 14,
+      "category": "光熱費",
+      "text": "春と秋を除いては、とても快適な暮らしが出来ており、電気代がご近所さんと比べてもかなり安い。（40代／愛知県／アイ・スマート）",
+      "source": "わたしの家づくり",
+      "url": "https://watashino-iedukuri.com/report/reviews/"
+    },
+    {
+      "no": 15,
+      "category": "営業対応",
+      "text": "営業の方は何を聞いてもうてば響く感じで性能なども含めて、即決でした。金額的にも少々高めかもしれないがそれ以上の価値はある。",
+      "source": "みん評",
+      "url": "https://minhyo.jp/ichijokoumuten"
+    },
+    {
+      "no": 16,
+      "category": "営業対応",
+      "text": "営業さんは本当にお仕事のできる方です。仕事が早く、丁寧で、わたしたちの言葉の意図を汲んでくれたり、気持ちを受け止めてくれたり。",
+      "source": "みん評",
+      "url": "https://minhyo.jp/ichijokoumuten"
+    },
+    {
+      "no": 17,
+      "category": "営業対応",
+      "text": "一条工務店の担当の方は、ガツガツせずにこちらのペースに合わせて対応してくれました。",
+      "source": "マイナビニュース",
+      "url": "https://news.mynavi.jp/real-estate-assessment/44360"
+    },
+    {
+      "no": 18,
+      "category": "営業対応",
+      "text": "一条工務店は存在を忘れてしまうくらい、営業をかけてこなかった。しつこくないのが好印象。",
+      "source": "リアマネ",
+      "url": "https://fantas-tech.co.jp/media/ichijo/"
+    },
+    {
+      "no": 19,
+      "category": "営業対応",
+      "text": "レスポンス、日時決めの早さも神+人柄抜群な営業さん。千葉エリアで検討中の方に紹介できる。",
+      "source": "X（旧Twitter）",
+      "url": "https://x.com/riri_myhome"
+    },
+    {
+      "no": 20,
+      "category": "展示場",
+      "text": "住宅展示場で多くのメーカーを訪問した中で、一条工務店の説明は常に実際モデルの数値を元に説明してくれた。",
+      "source": "マイナビニュース",
+      "url": "https://news.mynavi.jp/real-estate-assessment/44360"
+    },
+    {
+      "no": 21,
+      "category": "展示場",
+      "text": "モデルハウスはほぼ「標準仕様」で建てられており、見学時と実際に建てるイメージのギャップがないのが特徴。",
+      "source": "わたしの家づくり",
+      "url": "https://watashino-iedukuri.com/report/reviews/"
+    },
+    {
+      "no": 22,
+      "category": "総合満足度",
+      "text": "アンケートの結果、半数以上の方が「不満な点はなし」と回答。一条工務店の満足度は5点満点中4.09点。",
+      "source": "わたしの家づくり",
+      "url": "https://watashino-iedukuri.com/report/reviews/"
+    },
+    {
+      "no": 23,
+      "category": "総合満足度",
+      "text": "一条工務店をやめれば良かったと後悔したことは一度もない。住んでよかった、家づくりに後悔はないと感じている。",
+      "source": "mii-i-smart",
+      "url": "https://mii-i-smart.com/ichijo-hyoban-bad/"
+    },
+    {
+      "no": 24,
+      "category": "外観・内装",
+      "text": "完成後、近隣からも素敵な外観といわれ嬉しかった。一条工務店らしいシンプルだけど趣のある希望通りの住宅ができた。",
+      "source": "オリコン顧客満足度",
+      "url": "https://life.oricon.co.jp/rank-house-maker/company/ichijo/"
+    },
+    {
+      "no": 25,
+      "category": "外観・内装",
+      "text": "壁紙は選択肢が非常にたくさんあって良かった。外観もスタイリッシュで気に入っている。",
+      "source": "オリコン顧客満足度",
+      "url": "https://life.oricon.co.jp/rank-house-maker/company/ichijo/"
+    },
+    {
+      "no": 26,
+      "category": "コスパ",
+      "text": "見栄え＜＜＜＜値段 なので大満足！！うちの営業さんはこの方で良かったなと思える方。",
+      "source": "X（旧Twitter）",
+      "url": "https://x.com/wxxrautrpphgdcg"
+    },
+    {
+      "no": 27,
+      "category": "コスパ",
+      "text": "金額については一切値引きはしないという姿勢なので、分かりやすくて良かった。",
+      "source": "onetop不動産マガジン",
+      "url": "https://onetop-japan.jp/real-estate/ichijo-reputation/"
+    },
+    {
+      "no": 28,
+      "category": "耐震性",
+      "text": "一条工務店は標準仕様で耐震等級3（最高等級）に対応。創業当初から耐震にはかなり力を入れている。",
+      "source": "base-on",
+      "url": "https://base-on.com/media/ichijokoumuten-reputation/"
+    },
+    {
+      "no": 29,
+      "category": "ハグミー",
+      "text": "全館床暖房と高気密高断熱で超快適。風呂上がりに家族全員パンツ1枚でアイス食べてます。ハグミー約29坪の平屋を選び、住みやすい家を作っていくのも楽しみ。",
+      "source": "X（旧Twitter）",
+      "url": "https://x.com/kanichikunhouse"
+    },
+    {
+      "no": 30,
+      "category": "太陽光",
+      "text": "10年でほぼ元が取れ、11年目以降は利益だけが積み上がり、電気代削減効果は30年間ずっと続く。導入率94.2%の実績。",
+      "source": "一条ライフ",
+      "url": "https://www.ichijo-life.info/solarpower-regret/"
+    }
+  ],
+  "negativeReviews": [
+    {
+      "no": 1,
+      "category": "営業対応",
+      "text": "対応が強引で早く契約を決めるよう急かされた。説明不足で細かい条件を確認せずに契約を進められた。担当者のスキル差があり、対応の良し悪しにばらつきがある。",
+      "source": "リアマネ",
+      "url": "https://fantas-tech.co.jp/media/ichijo/"
+    },
+    {
+      "no": 2,
+      "category": "営業対応",
+      "text": "営業担当から「そこは富裕層が住むところ」「あなたの希望は、田舎の人が東京タワーの横に住みたいと言っているようなものだ」と言われ、信頼できないと感じて取引をやめた。",
+      "source": "THE ROOM TOUR",
+      "url": "https://the-room-tour.com/ichijokomuten/"
+    },
+    {
+      "no": 3,
+      "category": "営業対応",
+      "text": "営業、営業所長、マネージャー共に意見も対応も異なり、無責任な発言を連発します。契約書にサインしてから様々な決定事項を提示し、契約する前は平気で嘘をつきます。",
+      "source": "みん評",
+      "url": "https://minhyo.jp/ichijokoumuten"
+    },
+    {
+      "no": 4,
+      "category": "営業対応",
+      "text": "仮契約をゴリ押しされた。「キャンセルしてもいいから、仮契約を」と一条側の都合で一方的に決断時期の変更を迫られた。",
+      "source": "わたしの家づくり",
+      "url": "https://watashino-iedukuri.com/report/disadvantages/"
+    },
+    {
+      "no": 5,
+      "category": "営業対応",
+      "text": "性能が良いということが1番の決め手だったが、営業マンとその上司がひどすぎた。",
+      "source": "みん評",
+      "url": "https://minhyo.jp/ichijokoumuten"
+    },
+    {
+      "no": 6,
+      "category": "営業対応",
+      "text": "知識不足で質問に対する回答が曖昧。提案力不足でプロとしての提案がない。レスポンスが遅い。",
+      "source": "おうちスタイルナビ",
+      "url": "https://tenmaruco.xsrv.jp/ichijyo-regret"
+    },
+    {
+      "no": 7,
+      "category": "設計自由度",
+      "text": "現在建築中ですが、後悔しかありません。一条さんにお願いしたことで、今まで実現したことは何ひとつない。設計士さんは仮契約後しか出てこないので、自由度が異常に低いことが仮契約後にやっとわかってきます。",
+      "source": "みん評",
+      "url": "https://minhyo.jp/ichijokoumuten"
+    },
+    {
+      "no": 8,
+      "category": "設計自由度",
+      "text": "客目線ではなく一条が作りやすい家を提案。注文住宅ではありません。建売と変わらない間取りしかできません。",
+      "source": "みん評",
+      "url": "https://minhyo.jp/ichijokoumuten"
+    },
+    {
+      "no": 9,
+      "category": "設計自由度",
+      "text": "スキップフロア（中二階）や大開口の窓は一条工務店で叶えることができない。総2階構造が基本で、窓のサイズや配置に制約がある。",
+      "source": "わたしの家づくり",
+      "url": "https://watashino-iedukuri.com/report/disadvantages/"
+    },
+    {
+      "no": 10,
+      "category": "設計自由度",
+      "text": "デザインにバリエーションがない。みんな同じになる。パッと見て一条だとわかる外壁タイル。住宅業界のユニクロと表現される。",
+      "source": "mii-i-smart",
+      "url": "https://mii-i-smart.com/ichijo-hyoban-bad/"
+    },
+    {
+      "no": 11,
+      "category": "設計自由度",
+      "text": "和室の小上がりを提案してくれなかったなど、設計士の提案力が低い。",
+      "source": "つばめ商店",
+      "url": "https://tsubameshouten.com/ichijo-stop/"
+    },
+    {
+      "no": 12,
+      "category": "施工品質",
+      "text": "引渡し前の施主検査から30箇所以上のキズ、ミス、不良のオンパレード。窓ガラスのキズや棚の内部のキズなど設置の雑さが産んだキズばかり。",
+      "source": "みん評",
+      "url": "https://minhyo.jp/ichijokoumuten"
+    },
+    {
+      "no": 13,
+      "category": "施工品質",
+      "text": "壁紙、床の施工が悪すぎ！ショールームを案内された時は綺麗だったが、自分の家を建ててみると仕上がりに疑問を感じる箇所ばかり。結局プロの内装業者に張り替えてもらった。",
+      "source": "みん評",
+      "url": "https://minhyo.jp/ichijokoumuten"
+    },
+    {
+      "no": 14,
+      "category": "施工品質",
+      "text": "照明の位置が図面と大きくずれていたにもかかわらず「多少の誤差」とされた。打ち合わせ時の説明不足による食い違いが多い。",
+      "source": "リアマネ",
+      "url": "https://fantas-tech.co.jp/media/ichijo/"
+    },
+    {
+      "no": 15,
+      "category": "施工品質",
+      "text": "気密測定で数値が悪すぎて1日目の測定は測定不能。さらに床暖房の主の配管を逆に接続していて暖まる訳がない。",
+      "source": "みん評",
+      "url": "https://minhyo.jp/ichijokoumuten"
+    },
+    {
+      "no": 16,
+      "category": "施工品質",
+      "text": "工事スケジュールの管理がずさんで、朝めっちゃ早く工事してる割には昼には引き上げ。バイクを傷つけられたが「証拠がないから何も出来ません」と言われた。（2024年11月）",
+      "source": "みん評",
+      "url": "https://minhyo.jp/ichijokoumuten"
+    },
+    {
+      "no": 17,
+      "category": "施工品質",
+      "text": "エアコンの取付ミスで毎日虫が入ってきてたけど、ミスを認めずその後の点検にも来ない。（2024年12月）",
+      "source": "THE ROOM TOUR",
+      "url": "https://the-room-tour.com/ichijokomuten/"
+    },
+    {
+      "no": 18,
+      "category": "設計ミス",
+      "text": "打ち合わせ中の図面作成はフィリピンの作業者によって行われており、コミュニケーションが取りづらく間違いの原因になっている。図面の間違いに気付かず進み、施工中に指摘しても「承諾しましたよね？」で終わり。",
+      "source": "一条工務店とイツキのブログ",
+      "url": "https://www.smart-daisuke15.com/archives/3974"
+    },
+    {
+      "no": 19,
+      "category": "アフター",
+      "text": "アフターフォローがなってなさすぎる。連絡もこず、こちらから催促の電話をしても既に2週間経過。音沙汰なし。早急に対処してほしいとお願いしていますが、それも1ヶ月近く放置された。",
+      "source": "THE ROOM TOUR",
+      "url": "https://the-room-tour.com/ichijokomuten-aftersupport/"
+    },
+    {
+      "no": 20,
+      "category": "アフター",
+      "text": "担当営業がいなくなると全くフォローが有りません。連絡すると今度はもう保証期間が過ぎてるので、と全く相手にしてくれません。",
+      "source": "みん評",
+      "url": "https://minhyo.jp/ichijokoumuten"
+    },
+    {
+      "no": 21,
+      "category": "アフター",
+      "text": "13年ほどしか経ってないのにあちこち壊れる。アフターフォローはないに等しいです。雨漏りしても仕方ないと言ってお帰りになった。",
+      "source": "みん評",
+      "url": "https://minhyo.jp/ichijokoumuten"
+    },
+    {
+      "no": 22,
+      "category": "アフター",
+      "text": "エアコンが3年も経たずに故障し、当時の営業に連絡しても無視された。",
+      "source": "X（旧Twitter）",
+      "url": "https://x.com/msfm_msfm"
+    },
+    {
+      "no": 23,
+      "category": "アフター",
+      "text": "噂の通り、アフターの対応は貧弱過ぎる。本社が傲慢経営をしているようにしか見えない。",
+      "source": "みん評",
+      "url": "https://minhyo.jp/ichijokoumuten?page=28"
+    },
+    {
+      "no": 24,
+      "category": "アフター",
+      "text": "家の性能は確かに良いが、営業マンと現場監督が最悪。売るまで必死で売ったら終わり。",
+      "source": "みん評",
+      "url": "https://minhyo.jp/ichijokoumuten"
+    },
+    {
+      "no": 25,
+      "category": "費用",
+      "text": "確認した上で費用が掛からないとなっていた工事費項目を工事始まってから請求された。本社からの通達の一点張りで話にならない。時間巻き戻せるなら契約する前に戻したいくらい気持ちは落ち込んでいます。",
+      "source": "みん評",
+      "url": "https://minhyo.jp/ichijokoumuten"
+    },
+    {
+      "no": 26,
+      "category": "費用",
+      "text": "オプション含め、その他諸経費合わせると結構金額が上がり、建物代はトータル3,500万円ぐらいかかった。値引きなど一切ないので、高いなと思った。",
+      "source": "リアマネ",
+      "url": "https://fantas-tech.co.jp/media/ichijo/"
+    },
+    {
+      "no": 27,
+      "category": "費用",
+      "text": "デザイン等素敵だと感じましたが、お値段が予定より大幅に高くなってしまい諦めてしまいました。（建物予算2,500万円）",
+      "source": "onetop不動産マガジン",
+      "url": "https://onetop-japan.jp/real-estate/ichijo-reputation/"
+    },
+    {
+      "no": 28,
+      "category": "費用",
+      "text": "意外と高い。オプションつけるとほぼセキスイ価格。",
+      "source": "家語",
+      "url": "https://iegatari.com/ichijo/"
+    },
+    {
+      "no": 29,
+      "category": "費用",
+      "text": "価格設定が非常に複雑で透明性がない。担当者に予算を伝えても出てきた見積もりは伝えた予算を平気でオーバーしていた。",
+      "source": "つばめ商店",
+      "url": "https://tsubameshouten.com/ichijo-stop/"
+    },
+    {
+      "no": 30,
+      "category": "仮契約",
+      "text": "100万円の仮契約金を「とりあえず」で支払うリスクがある。仮契約しないと間取りを書いてくれない。打ち合わせで出来ると言っていた事が次の打ち合わせでは出来ないなど、設計士の知識が曖昧。",
+      "source": "マイナビニュース",
+      "url": "https://news.mynavi.jp/real-estate-assessment/44360"
+    }
+  ]
+}
