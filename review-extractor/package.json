@@ -1,0 +1,15 @@
+{
+  "name": "review-extractor",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "extract": "npx tsx src/index.ts",
+    "start": "npx tsx src/index.ts",
+    "setup": "npm install && npx playwright install chromium"
+  },
+  "dependencies": {
+    "playwright": "^1.52.0",
+    "tsx": "^4.19.0"
+  }
+}
