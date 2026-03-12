@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI×SEOコンテンツ制作サービス | 株式会社AZWAY</title>
+<meta name="description" content="AIが書く。プロが仕上げる。月100記事を、御社のメディアに。北海道No.1ビジネスメディア運営会社が、AI×SEOの記事生産ラインをあなたの会社に構築します。">
+<meta property="og:title" content="AI×SEOコンテンツ制作サービス | 株式会社AZWAY">
+<meta property="og:description" content="AIが書く。プロが仕上げる。月100記事を、御社のメディアに。北海道No.1ビジネスメディア運営会社が、AI×SEOの記事生産ラインをあなたの会社に構築します。">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://example.com/ai-seo-service">
+<meta property="og:image" content="https://example.com/ogp-image.png">
+<meta property="og:site_name" content="株式会社AZWAY">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --navy: #0A1628;
+  --navy-light: #111D32;
+  --navy-mid: #162440;
+  --cyan: #00B4D8;
+  --cyan-glow: rgba(0, 180, 216, 0.15);
+  --white: #FFFFFF;
+  --gray: #A0AEC0;
+  --gray-light: #CBD5E0;
+  --text: #E2E8F0;
+}
+html { scroll-behavior: smooth; font-size: 16px; }
+body {
+  font-family: 'Noto Sans JP', sans-serif;
+  background: var(--navy);
+  color: var(--text);
+  line-height: 1.8;
+  overflow-x: hidden;
+}
+a { color: var(--cyan); text-decoration: none; }
+
+/* Utility */
+.container { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+.section { padding: 100px 0; }
+.section-title {
+  font-size: clamp(1.6rem, 4vw, 2.4rem);
+  font-weight: 900;
+  text-align: center;
+  margin-bottom: 60px;
+  color: var(--white);
+  letter-spacing: 0.02em;
+}
+.section-title span { color: var(--cyan); }
+
+/* Fade-in animation */
+.fade-in {
+  opacity: 0;
+  transform: translateY(32px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+.fade-in.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ===== HEADER ===== */
+header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 100;
+  background: rgba(10, 22, 40, 0.85);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(0, 180, 216, 0.1);
+}
+.header-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 64px;
+}
+.logo {
+  font-size: 1.2rem;
+  font-weight: 900;
+  color: var(--white);
+  letter-spacing: 0.04em;
+}
+.logo em { color: var(--cyan); font-style: normal; }
+.header-cta {
+  display: inline-block;
+  padding: 8px 24px;
+  background: var(--cyan);
+  color: var(--navy);
+  font-weight: 700;
+  font-size: 0.85rem;
+  border-radius: 6px;
+  transition: opacity 0.2s;
+}
+.header-cta:hover { opacity: 0.85; color: var(--navy); }
+
+/* ===== HERO ===== */
+.hero {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 120px 24px 80px;
+  overflow: hidden;
+}
+.hero-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+.hero-bg svg { width: 100%; height: 100%; opacity: 0.12; }
+.hero-content { position: relative; z-index: 1; max-width: 800px; }
+.hero h1 {
+  font-size: clamp(1.8rem, 5vw, 3.2rem);
+  font-weight: 900;
+  line-height: 1.4;
+  color: var(--white);
+  margin-bottom: 24px;
+}
+.hero h1 em {
+  font-style: normal;
+  color: var(--cyan);
+}
+.hero .sub {
+  font-size: clamp(0.95rem, 2vw, 1.15rem);
+  color: var(--gray-light);
+  margin-bottom: 48px;
+  font-weight: 400;
+  line-height: 1.9;
+}
+.btn-primary {
+  display: inline-block;
+  padding: 16px 48px;
+  background: var(--cyan);
+  color: var(--navy);
+  font-weight: 700;
+  font-size: 1.05rem;
+  border-radius: 8px;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 0 30px rgba(0, 180, 216, 0.3);
+}
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 40px rgba(0, 180, 216, 0.5);
+  color: var(--navy);
+}
+
+/* ===== PROBLEMS ===== */
+.problems { background: var(--navy-light); }
+.cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 28px;
+}
+.card {
+  background: var(--navy-mid);
+  border: 1px solid rgba(0, 180, 216, 0.12);
+  border-radius: 12px;
+  padding: 40px 28px;
+  text-align: center;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+.card:hover {
+  border-color: var(--cyan);
+  box-shadow: 0 0 24px var(--cyan-glow);
+}
+.card-icon {
+  font-size: 2.4rem;
+  margin-bottom: 20px;
+  display: block;
+}
+.card p {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--gray-light);
+  line-height: 1.8;
+}
+
+/* ===== STEPS ===== */
+.steps-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0;
+  position: relative;
+}
+.step {
+  text-align: center;
+  padding: 0 24px;
+  position: relative;
+}
+.step-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 2px solid var(--cyan);
+  color: var(--cyan);
+  font-weight: 900;
+  font-size: 1.2rem;
+  margin-bottom: 20px;
+  position: relative;
+  z-index: 1;
+  background: var(--navy);
+}
+.step h3 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--white);
+  margin-bottom: 14px;
+}
+.step p {
+  font-size: 0.95rem;
+  color: var(--gray);
+  line-height: 1.8;
+}
+.step-connector {
+  position: absolute;
+  top: 28px;
+  left: calc(50% + 36px);
+  width: calc(100% - 72px);
+  height: 2px;
+  background: linear-gradient(90deg, var(--cyan), rgba(0,180,216,0.2));
+}
+.step:last-child .step-connector { display: none; }
+
+/* ===== PROOF ===== */
+.proof { background: var(--navy-light); }
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 28px;
+  margin-bottom: 40px;
+}
+.stat {
+  text-align: center;
+  padding: 32px 16px;
+  background: var(--navy-mid);
+  border-radius: 12px;
+  border: 1px solid rgba(0, 180, 216, 0.1);
+}
+.stat-number {
+  font-size: clamp(2rem, 4vw, 2.8rem);
+  font-weight: 900;
+  color: var(--cyan);
+  display: block;
+  margin-bottom: 8px;
+}
+.stat-label {
+  font-size: 0.9rem;
+  color: var(--gray);
+}
+.proof-note {
+  text-align: center;
+  color: var(--gray-light);
+  font-size: 0.95rem;
+  max-width: 640px;
+  margin: 0 auto;
+  line-height: 1.9;
+}
+
+/* ===== COMPARISON ===== */
+.table-wrap { overflow-x: auto; }
+.compare-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+  min-width: 640px;
+}
+.compare-table th,
+.compare-table td {
+  padding: 18px 20px;
+  text-align: center;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.compare-table thead th {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--gray-light);
+  background: var(--navy-light);
+  position: sticky;
+  top: 64px;
+}
+.compare-table thead th:first-child { text-align: left; }
+.compare-table tbody td:first-child {
+  text-align: left;
+  font-weight: 500;
+  color: var(--gray-light);
+}
+.compare-table .highlight {
+  background: rgba(0, 180, 216, 0.06);
+  border-left: 2px solid var(--cyan);
+  border-right: 2px solid var(--cyan);
+}
+.compare-table thead .highlight {
+  color: var(--cyan);
+  font-weight: 900;
+  border-top: 2px solid var(--cyan);
+}
+.compare-table tbody tr:last-child .highlight {
+  border-bottom: 2px solid var(--cyan);
+}
+
+/* ===== PRICING ===== */
+.pricing { background: var(--navy-light); }
+.plans {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 28px;
+  align-items: start;
+}
+.plan {
+  background: var(--navy-mid);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 16px;
+  padding: 40px 28px;
+  text-align: center;
+  position: relative;
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+.plan:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+}
+.plan.recommended {
+  border: 2px solid var(--cyan);
+  box-shadow: 0 0 40px var(--cyan-glow);
+  transform: scale(1.04);
+}
+.plan.recommended:hover { transform: scale(1.04) translateY(-4px); }
+.badge {
+  position: absolute;
+  top: -14px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--cyan);
+  color: var(--navy);
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 4px 20px;
+  border-radius: 20px;
+}
+.plan-name {
+  font-size: 1.3rem;
+  font-weight: 900;
+  color: var(--white);
+  margin-bottom: 8px;
+}
+.plan-price {
+  font-size: 1.6rem;
+  font-weight: 900;
+  color: var(--cyan);
+  margin-bottom: 24px;
+}
+.plan-price small { font-size: 0.85rem; font-weight: 400; color: var(--gray); }
+.plan-features {
+  list-style: none;
+  text-align: left;
+  margin-bottom: 32px;
+}
+.plan-features li {
+  padding: 8px 0;
+  font-size: 0.92rem;
+  color: var(--gray-light);
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.plan-features li::before {
+  content: '✓';
+  color: var(--cyan);
+  margin-right: 10px;
+  font-weight: 700;
+}
+.btn-outline {
+  display: inline-block;
+  padding: 12px 36px;
+  border: 2px solid var(--cyan);
+  color: var(--cyan);
+  font-weight: 700;
+  font-size: 0.95rem;
+  border-radius: 8px;
+  transition: background 0.2s, color 0.2s;
+}
+.btn-outline:hover {
+  background: var(--cyan);
+  color: var(--navy);
+}
+.pricing-note {
+  text-align: center;
+  margin-top: 40px;
+  color: var(--gray);
+  font-size: 0.9rem;
+}
+
+/* ===== WORKFLOW ===== */
+.workflow-box {
+  max-width: 800px;
+  margin: 0 auto;
+  background: var(--navy-light);
+  border: 1px solid rgba(0, 180, 216, 0.15);
+  border-radius: 16px;
+  padding: 48px 40px;
+}
+.workflow-box p {
+  font-size: 1rem;
+  color: var(--gray-light);
+  margin-bottom: 32px;
+  line-height: 1.9;
+}
+.workflow-details {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 28px;
+}
+.workflow-price {
+  background: var(--navy-mid);
+  border-radius: 10px;
+  padding: 24px;
+  text-align: center;
+}
+.workflow-price .label { font-size: 0.85rem; color: var(--gray); margin-bottom: 4px; }
+.workflow-price .value { font-size: 1.4rem; font-weight: 900; color: var(--cyan); }
+.workflow-includes h4 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--white);
+  margin-bottom: 12px;
+}
+.workflow-includes ul {
+  list-style: none;
+}
+.workflow-includes li {
+  font-size: 0.92rem;
+  color: var(--gray-light);
+  padding: 4px 0;
+}
+.workflow-includes li::before {
+  content: '─';
+  color: var(--cyan);
+  margin-right: 10px;
+}
+
+/* ===== FAQ ===== */
+.faq { background: var(--navy-light); }
+.faq-list { max-width: 760px; margin: 0 auto; }
+.faq-item {
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.faq-question {
+  width: 100%;
+  background: none;
+  border: none;
+  color: var(--white);
+  font-family: 'Noto Sans JP', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  text-align: left;
+  padding: 24px 40px 24px 0;
+  cursor: pointer;
+  position: relative;
+  line-height: 1.7;
+}
+.faq-question::after {
+  content: '+';
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1.5rem;
+  color: var(--cyan);
+  transition: transform 0.3s;
+}
+.faq-item.open .faq-question::after {
+  content: '−';
+}
+.faq-answer {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.4s ease, padding 0.3s ease;
+}
+.faq-answer-inner {
+  padding: 0 0 24px;
+  font-size: 0.95rem;
+  color: var(--gray);
+  line-height: 1.9;
+}
+
+/* ===== CONTACT ===== */
+.contact-form {
+  max-width: 600px;
+  margin: 0 auto;
+}
+.form-group { margin-bottom: 24px; }
+.form-group label {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--gray-light);
+  margin-bottom: 8px;
+}
+.form-group label .required {
+  color: var(--cyan);
+  font-size: 0.8rem;
+  margin-left: 6px;
+}
+.form-group input,
+.form-group textarea {
+  width: 100%;
+  padding: 14px 16px;
+  background: var(--navy-light);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  color: var(--white);
+  font-family: 'Noto Sans JP', sans-serif;
+  font-size: 1rem;
+  transition: border-color 0.2s;
+}
+.form-group input:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--cyan);
+}
+.form-group textarea { min-height: 140px; resize: vertical; }
+.form-submit {
+  text-align: center;
+  margin-top: 8px;
+}
+.btn-submit {
+  display: inline-block;
+  padding: 16px 56px;
+  background: var(--cyan);
+  color: var(--navy);
+  font-family: 'Noto Sans JP', sans-serif;
+  font-weight: 700;
+  font-size: 1.05rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 0 30px rgba(0, 180, 216, 0.3);
+}
+.btn-submit:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 40px rgba(0, 180, 216, 0.5);
+}
+.form-note {
+  text-align: center;
+  margin-top: 20px;
+  font-size: 0.85rem;
+  color: var(--gray);
+}
+
+/* ===== FOOTER ===== */
+footer {
+  text-align: center;
+  padding: 48px 24px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+.footer-company {
+  font-weight: 700;
+  color: var(--white);
+  font-size: 1rem;
+  margin-bottom: 8px;
+}
+.footer-address {
+  font-size: 0.85rem;
+  color: var(--gray);
+  margin-bottom: 16px;
+}
+.footer-copy {
+  font-size: 0.8rem;
+  color: var(--gray);
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .section { padding: 72px 0; }
+  .section-title { margin-bottom: 40px; }
+  .cards { grid-template-columns: 1fr; }
+  .steps-grid { grid-template-columns: 1fr; gap: 40px; }
+  .step-connector { display: none; }
+  .stats { grid-template-columns: repeat(2, 1fr); }
+  .plans { grid-template-columns: 1fr; max-width: 400px; margin-left: auto; margin-right: auto; }
+  .plan.recommended { transform: none; }
+  .plan.recommended:hover { transform: translateY(-4px); }
+  .workflow-details { grid-template-columns: 1fr; }
+  .workflow-box { padding: 32px 24px; }
+  .hero { padding: 100px 24px 60px; }
+}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <div class="header-inner">
+    <div class="logo"><em>AZWAY</em></div>
+    <a href="#contact" class="header-cta">無料相談する</a>
+  </div>
+</header>
+
+<!-- 1. Hero -->
+<section class="hero">
+  <div class="hero-bg">
+    <svg viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice">
+      <defs>
+        <radialGradient id="g1" cx="30%" cy="40%"><stop offset="0%" stop-color="#00B4D8" stop-opacity="0.2"/><stop offset="100%" stop-color="#0A1628" stop-opacity="0"/></radialGradient>
+        <radialGradient id="g2" cx="70%" cy="60%"><stop offset="0%" stop-color="#00B4D8" stop-opacity="0.12"/><stop offset="100%" stop-color="#0A1628" stop-opacity="0"/></radialGradient>
+      </defs>
+      <rect fill="url(#g1)" width="1200" height="800"/>
+      <rect fill="url(#g2)" width="1200" height="800"/>
+      <!-- Neural network nodes -->
+      <g stroke="#00B4D8" stroke-width="0.5" fill="none" opacity="0.5">
+        <circle cx="200" cy="150" r="4"/><circle cx="350" cy="250" r="3"/><circle cx="500" cy="180" r="5"/>
+        <circle cx="650" cy="300" r="3"/><circle cx="800" cy="200" r="4"/><circle cx="950" cy="350" r="3"/>
+        <circle cx="300" cy="450" r="4"/><circle cx="450" cy="550" r="3"/><circle cx="600" cy="480" r="5"/>
+        <circle cx="750" cy="580" r="3"/><circle cx="900" cy="500" r="4"/><circle cx="150" cy="600" r="3"/>
+        <circle cx="1050" cy="250" r="3"/><circle cx="100" cy="350" r="4"/><circle cx="550" cy="650" r="3"/>
+        <line x1="200" y1="150" x2="350" y2="250"/><line x1="350" y1="250" x2="500" y2="180"/>
+        <line x1="500" y1="180" x2="650" y2="300"/><line x1="650" y1="300" x2="800" y2="200"/>
+        <line x1="800" y1="200" x2="950" y2="350"/><line x1="300" y1="450" x2="450" y2="550"/>
+        <line x1="450" y1="550" x2="600" y2="480"/><line x1="600" y1="480" x2="750" y2="580"/>
+        <line x1="750" y1="580" x2="900" y2="500"/><line x1="200" y1="150" x2="300" y2="450"/>
+        <line x1="500" y1="180" x2="600" y2="480"/><line x1="800" y1="200" x2="900" y2="500"/>
+        <line x1="350" y1="250" x2="450" y2="550"/><line x1="650" y1="300" x2="750" y2="580"/>
+        <line x1="950" y1="350" x2="1050" y2="250"/><line x1="100" y1="350" x2="200" y2="150"/>
+        <line x1="150" y1="600" x2="300" y2="450"/><line x1="550" y1="650" x2="600" y2="480"/>
+        <line x1="100" y1="350" x2="300" y2="450"/><line x1="1050" y1="250" x2="900" y2="500"/>
+      </g>
+    </svg>
+  </div>
+  <div class="hero-content">
+    <h1>AIが書く。プロが仕上げる。<br><em>月100記事</em>を、御社のメディアに。</h1>
+    <p class="sub">北海道No.1ビジネスメディア運営会社が、<br>AI×SEOの記事生産ラインをあなたの会社に構築します</p>
+    <a href="#contact" class="btn-primary">無料相談する</a>
+  </div>
+</section>
+
+<!-- 2. Problems -->
+<section class="section problems">
+  <div class="container">
+    <h2 class="section-title fade-in">こんな<span>課題</span>はありませんか？</h2>
+    <div class="cards fade-in">
+      <div class="card">
+        <span class="card-icon">📉</span>
+        <p>SEO記事を外注しているが、<br>品質にバラつきがある</p>
+      </div>
+      <div class="card">
+        <span class="card-icon">⏳</span>
+        <p>ライターの確保・管理に<br>時間がかかりすぎる</p>
+      </div>
+      <div class="card">
+        <span class="card-icon">🤔</span>
+        <p>AI記事に興味はあるが、<br>品質やSEO効果が不安</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 3. Steps -->
+<section class="section">
+  <div class="container">
+    <h2 class="section-title fade-in">AI×プロ監修の<span>記事生産ライン</span></h2>
+    <div class="steps-grid fade-in">
+      <div class="step">
+        <div class="step-number">1</div>
+        <div class="step-connector"></div>
+        <h3>キーワード戦略設計</h3>
+        <p>御社のドメイン・競合を分析し、勝てるKW戦略を策定</p>
+      </div>
+      <div class="step">
+        <div class="step-number">2</div>
+        <div class="step-connector"></div>
+        <h3>AI記事生成＋専門家監修</h3>
+        <p>独自プロンプトで高品質な記事をAI生成。業界知見を持つ編集者が監修</p>
+      </div>
+      <div class="step">
+        <div class="step-number">3</div>
+        <h3>WordPress入稿＋効果測定</h3>
+        <p>記事入稿からGA4での効果測定まで一気通貫で対応</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 4. Proof -->
+<section class="section proof">
+  <div class="container">
+    <h2 class="section-title fade-in">自社メディアで<span>実証済み</span></h2>
+    <div class="stats fade-in">
+      <div class="stat">
+        <span class="stat-number" data-target="100" data-suffix="本+">0</span>
+        <span class="stat-label">月間記事生産数</span>
+      </div>
+      <div class="stat">
+        <span class="stat-number" data-target="5" data-suffix="サイト+">0</span>
+        <span class="stat-label">自社運営メディア数</span>
+      </div>
+      <div class="stat">
+        <span class="stat-number" data-target="57" data-prefix="DR">0</span>
+        <span class="stat-label">最高ドメインレーティング</span>
+      </div>
+      <div class="stat">
+        <span class="stat-number static">不動産・建設・金融</span>
+        <span class="stat-label">対応業界</span>
+      </div>
+    </div>
+    <p class="proof-note fade-in">自社で北海道最大級のビジネスメディアを運営。<br>同じ品質基準でお客様のメディアも支援します</p>
+  </div>
+</section>
+
+<!-- 5. Comparison -->
+<section class="section">
+  <div class="container">
+    <h2 class="section-title fade-in">なぜ<span>AZWAY</span>なのか</h2>
+    <div class="table-wrap fade-in">
+      <table class="compare-table">
+        <thead>
+          <tr>
+            <th>項目</th>
+            <th>一般的なライター外注</th>
+            <th>AI記事自動生成ツール</th>
+            <th class="highlight">AZWAY</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>月間生産量</td>
+            <td>10〜20本</td>
+            <td>無制限（低品質）</td>
+            <td class="highlight">100本+（高品質）</td>
+          </tr>
+          <tr>
+            <td>品質管理</td>
+            <td>属人的</td>
+            <td>なし</td>
+            <td class="highlight">プロ監修体制</td>
+          </tr>
+          <tr>
+            <td>SEO設計</td>
+            <td>ライター任せ</td>
+            <td>テンプレ</td>
+            <td class="highlight">専門家が戦略設計</td>
+          </tr>
+          <tr>
+            <td>コスト</td>
+            <td>高い</td>
+            <td>安い</td>
+            <td class="highlight">コスパ最適</td>
+          </tr>
+          <tr>
+            <td>納品形態</td>
+            <td>テキスト</td>
+            <td>テキスト</td>
+            <td class="highlight">WordPress入稿済み</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- 6. Pricing -->
+<section class="section pricing">
+  <div class="container">
+    <h2 class="section-title fade-in">料金<span>プラン</span></h2>
+    <div class="plans fade-in">
+      <div class="plan">
+        <div class="plan-name">ライト</div>
+        <div class="plan-price">月額15万円〜<br><small>税別</small></div>
+        <ul class="plan-features">
+          <li>月10記事</li>
+          <li>KW選定</li>
+          <li>WordPress入稿</li>
+        </ul>
+        <a href="#contact" class="btn-outline">相談する</a>
+      </div>
+      <div class="plan recommended">
+        <div class="badge">おすすめ</div>
+        <div class="plan-name">スタンダード</div>
+        <div class="plan-price">月額40万円〜<br><small>税別</small></div>
+        <ul class="plan-features">
+          <li>月30記事</li>
+          <li>KW戦略設計</li>
+          <li>GA4レポート付き</li>
+        </ul>
+        <a href="#contact" class="btn-outline">相談する</a>
+      </div>
+      <div class="plan">
+        <div class="plan-name">プレミアム</div>
+        <div class="plan-price">月額80万円〜<br><small>税別</small></div>
+        <ul class="plan-features">
+          <li>月100記事</li>
+          <li>フルカスタム</li>
+          <li>専任ディレクター</li>
+        </ul>
+        <a href="#contact" class="btn-outline">相談する</a>
+      </div>
+    </div>
+    <p class="pricing-note fade-in">※記事単価・本数はカスタマイズ可能です。まずはご相談ください。</p>
+  </div>
+</section>
+
+<!-- 7. Workflow -->
+<section class="section">
+  <div class="container">
+    <h2 class="section-title fade-in">御社内に<span>AI記事生産ライン</span>を構築</h2>
+    <div class="workflow-box fade-in">
+      <p>外注ではなく、御社のチームがAI記事を量産できる仕組みを構築します。プロンプト設計・ワークフロー構築・トレーニングまで一括対応。</p>
+      <div class="workflow-details">
+        <div class="workflow-price">
+          <div class="label">初期構築費</div>
+          <div class="value">50万円〜</div>
+        </div>
+        <div class="workflow-price">
+          <div class="label">月額サポート</div>
+          <div class="value">10万円〜</div>
+        </div>
+      </div>
+      <div class="workflow-includes">
+        <h4>含まれるもの</h4>
+        <ul>
+          <li>プロンプトテンプレート</li>
+          <li>品質チェックリスト</li>
+          <li>運用マニュアル</li>
+          <li>月1回のレビュー会</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 8. FAQ -->
+<section class="section faq">
+  <div class="container">
+    <h2 class="section-title fade-in">よくある<span>ご質問</span></h2>
+    <div class="faq-list fade-in">
+      <div class="faq-item">
+        <button class="faq-question">Q. AIで作った記事はSEOに強いのですか？</button>
+        <div class="faq-answer">
+          <div class="faq-answer-inner">はい。キーワード戦略の設計からAIへの指示設計まで、SEOの専門家が監修しています。自社メディアで検証済みの手法をそのまま適用します。</div>
+        </div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question">Q. どんな業界に対応していますか？</button>
+        <div class="faq-answer">
+          <div class="faq-answer-inner">不動産・建設・金融を中心に、BtoB全般に対応可能です。業界ごとの専門用語やユーザーの検索意図を踏まえた記事設計を行います。</div>
+        </div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question">Q. 記事の品質チェックはどのように行いますか？</button>
+        <div class="faq-answer">
+          <div class="faq-answer-inner">AI生成後、ファクトチェック・SEOチェック・可読性チェックの3段階で品質管理を行います。必要に応じて専門家による監修も実施します。</div>
+        </div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question">Q. 最低契約期間はありますか？</button>
+        <div class="faq-answer">
+          <div class="faq-answer-inner">3ヶ月からの契約となります。SEOは効果が出るまでに時間がかかるため、最低3ヶ月の継続をお勧めしています。</div>
+        </div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question">Q. 自社でAI記事制作を内製化したい場合は？</button>
+        <div class="faq-answer">
+          <div class="faq-answer-inner">「AIワークフロー構築サービス」として、御社チームへのプロンプト設計・トレーニングも承っています。</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 9. Contact -->
+<section class="section" id="contact">
+  <div class="container">
+    <h2 class="section-title fade-in">まずは<span>無料相談</span>から</h2>
+    <form class="contact-form fade-in" action="#" method="post">
+      <div class="form-group">
+        <label>会社名<span class="required">必須</span></label>
+        <input type="text" name="company" required placeholder="株式会社○○">
+      </div>
+      <div class="form-group">
+        <label>お名前<span class="required">必須</span></label>
+        <input type="text" name="name" required placeholder="山田 太郎">
+      </div>
+      <div class="form-group">
+        <label>メールアドレス<span class="required">必須</span></label>
+        <input type="email" name="email" required placeholder="example@company.co.jp">
+      </div>
+      <div class="form-group">
+        <label>電話番号</label>
+        <input type="tel" name="phone" placeholder="03-0000-0000">
+      </div>
+      <div class="form-group">
+        <label>ご相談内容</label>
+        <textarea name="message" placeholder="ご検討中のサービスや、現在のお悩みなどをお聞かせください"></textarea>
+      </div>
+      <div class="form-submit">
+        <button type="submit" class="btn-submit">無料相談を申し込む</button>
+      </div>
+      <p class="form-note">※1営業日以内にご返信いたします</p>
+    </form>
+  </div>
+</section>
+
+<!-- 10. Footer -->
+<footer>
+  <div class="footer-company">株式会社AZWAY</div>
+  <div class="footer-address">東京都新宿区大久保3-8-3</div>
+  <div class="footer-copy">&copy; 2026 AZWAY Inc. All Rights Reserved.</div>
+</footer>
+
+<script>
+// Intersection Observer - Fade in
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('is-visible');
+      observer.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.15 });
+
+document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+// Count-up animation
+const countObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const el = entry.target;
+      if (el.classList.contains('static')) return;
+      const target = parseInt(el.dataset.target);
+      const prefix = el.dataset.prefix || '';
+      const suffix = el.dataset.suffix || '';
+      const duration = 1500;
+      const start = performance.now();
+      const animate = (now) => {
+        const progress = Math.min((now - start) / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        const current = Math.round(target * eased);
+        el.textContent = prefix + current + suffix;
+        if (progress < 1) requestAnimationFrame(animate);
+      };
+      requestAnimationFrame(animate);
+      countObserver.unobserve(el);
+    }
+  });
+}, { threshold: 0.5 });
+
+document.querySelectorAll('.stat-number:not(.static)').forEach(el => countObserver.observe(el));
+
+// FAQ accordion
+document.querySelectorAll('.faq-question').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const item = btn.parentElement;
+    const answer = item.querySelector('.faq-answer');
+    const isOpen = item.classList.contains('open');
+
+    // Close all
+    document.querySelectorAll('.faq-item').forEach(i => {
+      i.classList.remove('open');
+      i.querySelector('.faq-answer').style.maxHeight = null;
+    });
+
+    // Open clicked if was closed
+    if (!isOpen) {
+      item.classList.add('open');
+      answer.style.maxHeight = answer.scrollHeight + 'px';
+    }
+  });
+});
+</script>
+</body>
+</html>
